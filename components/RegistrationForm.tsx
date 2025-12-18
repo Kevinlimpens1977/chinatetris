@@ -25,12 +25,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
     if (!formData.name || !formData.city || !formData.email || !formData.password) return;
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Wachtwoorden komen niet overeen');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('Wachtwoord moet minimaal 6 tekens lang zijn');
       return;
     }
 
@@ -71,7 +71,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
       if (error) throw error;
     } catch (error) {
       console.error('Error signing up with Google:', error);
-      setError('Could not register with Google.');
+      setError('Kon niet registreren met Google.');
     }
   };
 
@@ -80,22 +80,22 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
       <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6 text-center">
         <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20">
           <div className="text-5xl mb-4">📩</div>
-          <h2 className="text-2xl font-bold text-white mb-4">Check your email!</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Controleer je e-mail!</h2>
           <p className="text-gray-300 mb-4">
-            We have sent a verification link to <span className="text-cyan-400 font-bold">{formData.email}</span>.
+            We hebben een verificatielink gestuurd naar <span className="text-cyan-400 font-bold">{formData.email}</span>.
           </p>
           <div className="bg-cyan-900/30 border border-cyan-500/50 rounded-xl p-4 mb-6 text-left">
             <p className="text-sm text-cyan-200 leading-relaxed">
-              <strong className="text-cyan-300">📌 Important:</strong><br />
-              Click the link in your email to activate your account.
-              <strong className="text-white"> Then you can log in to play!</strong>
+              <strong className="text-cyan-300">📌 Belangrijk:</strong><br />
+              Klik op de link in je e-mail om je account te activeren.
+              <strong className="text-white"> Daarna kun je inloggen om te spelen!</strong>
             </p>
           </div>
           <button
             onClick={onGoToLogin}
             className="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition-all transform hover:scale-105"
           >
-            Go to Login
+            Ga naar Inloggen
           </button>
         </div>
       </div>
@@ -108,7 +108,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
         <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-5xl">🎮</div>
 
         <h2 className="text-2xl font-bold text-center mb-6 mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-300 uppercase tracking-widest">
-          Player Registration
+          Speler Registratie
         </h2>
 
         {error && (
@@ -123,43 +123,43 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
             className="w-full py-3 rounded-xl bg-white text-gray-800 font-bold hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg mb-4"
           >
             <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-            <span>Register with Google</span>
+            <span>Registreren met Google</span>
           </button>
 
           <div className="flex items-center gap-2 w-full">
             <div className="h-px bg-white/20 flex-1"></div>
-            <span className="text-[10px] text-white/40 uppercase tracking-widest">or enter details</span>
+            <span className="text-[10px] text-white/40 uppercase tracking-widest">of voer gegevens in</span>
             <div className="h-px bg-white/20 flex-1"></div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Name</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Naam</label>
             <input
               type="text"
               required
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Your name"
+              placeholder="Je naam"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">City</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Stad</label>
             <input
               type="text"
               required
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.city}
               onChange={e => setFormData({ ...formData, city: e.target.value })}
-              placeholder="e.g. London"
+              placeholder="bijv. Amsterdam"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Email Address</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">E-mailadres</label>
             <input
               type="email"
               required
@@ -171,7 +171,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Password</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Wachtwoord</label>
             <input
               type="password"
               required
@@ -179,12 +179,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.password}
               onChange={e => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Min. 6 characters"
+              placeholder="Min. 6 tekens"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Confirm Password</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Wachtwoord Bevestigen</label>
             <input
               type="password"
               required
@@ -192,12 +192,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.confirmPassword}
               onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder="Confirm password"
+              placeholder="Bevestig wachtwoord"
             />
           </div>
 
           <div className="text-[10px] text-gray-400 text-center leading-relaxed mt-2 uppercase tracking-tight">
-            Verification email will be sent. Account must be verified to play.
+            Er wordt een verificatie-e-mail gestuurd. Account moet geverifieerd zijn om te kunnen spelen.
           </div>
 
           <div className="flex gap-4 pt-4">
@@ -207,14 +207,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               disabled={loading}
               className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors disabled:opacity-50 text-xs"
             >
-              BACK
+              TERUG
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:transform-none text-xs"
             >
-              {loading ? 'PROCESSING...' : 'REGISTER'}
+              {loading ? 'VERWERKEN...' : 'REGISTREREN'}
             </button>
           </div>
         </form>

@@ -66,29 +66,29 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
 
     return (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
-            <TetrisPanel title={status === 'success' ? "PURCHASE SUCCESSFUL!" : "VERIFYING..."} className="w-full max-w-md text-center">
+            <TetrisPanel title={status === 'success' ? "AANKOOP GESLAAGD!" : "VERIFICEREN..."} className="w-full max-w-md text-center">
 
                 {status === 'verifying' && (
                     <div className="flex flex-col items-center py-8">
                         <div className="text-4xl animate-spin mb-4">⏳</div>
-                        <p className="text-[#FFD700] animate-pulse">Verifying payment with secure gateway...</p>
+                        <p className="text-[#FFD700] animate-pulse">Betaling verifiëren bij beveiligde provider...</p>
                     </div>
                 )}
 
                 {status === 'success' && (
                     <div className="animate-in zoom-in duration-300">
                         <div className="text-6xl mb-4 text-green-500">✔</div>
-                        <h2 className="text-2xl text-[#FFD700] font-bold mb-2 font-arcade">SUCCESS!</h2>
+                        <h2 className="text-2xl text-[#FFD700] font-bold mb-2 font-arcade">SUCCES!</h2>
                         <p className="text-white text-lg mb-6 leading-relaxed">
-                            Your digital credits have been added to your account.
+                            Je digitale credits zijn toegevoegd aan je account.
                         </p>
-                        <p className="text-xs text-gray-500 mb-8 uppercase tracking-widest">Redirecting you shortly...</p>
+                        <p className="text-xs text-gray-500 mb-8 uppercase tracking-widest">Je wordt direct doorgestuurd...</p>
 
                         <button
                             onClick={onContinue}
                             className="w-full py-4 bg-green-600 text-white font-bold rounded hover:bg-green-500 font-arcade text-xl border-b-4 border-green-800 active:border-b-0 active:translate-y-1 shadow-lg"
                         >
-                            GO TO GAME
+                            NAAR HET SPEL
                         </button>
                     </div>
                 )}
@@ -96,13 +96,13 @@ const CreditSuccessScreen: React.FC<CreditSuccessScreenProps> = ({ onContinue })
                 {status === 'error' && (
                     <div>
                         <div className="text-6xl mb-4">⚠️</div>
-                        <h2 className="text-xl text-red-500 font-bold mb-4 uppercase tracking-widest">Something went wrong</h2>
+                        <h2 className="text-xl text-red-500 font-bold mb-4 uppercase tracking-widest">Er is iets misgegaan</h2>
                         <p className="text-white mb-8">{errorMsg}</p>
                         <button
                             onClick={onContinue}
                             className="w-full py-3 bg-gray-700 text-white font-bold rounded hover:bg-gray-600 uppercase tracking-widest text-xs"
                         >
-                            Return to Dashboard
+                            Terug naar Dashboard
                         </button>
                     </div>
                 )}

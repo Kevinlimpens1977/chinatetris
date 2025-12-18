@@ -56,21 +56,21 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         {/* Header */}
                         <div className="text-center mb-4 md:mb-6 shrink-0">
                             <h2 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-yellow-200 uppercase tracking-tighter drop-shadow-sm">
-                                PAUSE & RANKING
+                                PAUZE & RANKING
                             </h2>
-                            <div className="text-yellow-500 text-[10px] md:text-xs tracking-[0.2em] uppercase mt-2 font-bold opacity-80">Global Competition Top 10</div>
+                            <div className="text-yellow-500 text-[10px] md:text-xs tracking-[0.2em] uppercase mt-2 font-bold opacity-80">Wereldwijde Competitie Top 10</div>
                         </div>
 
                         {/* Leaderboard List */}
                         <div className="bg-white/5 rounded-xl overflow-hidden mb-4 md:mb-6 border border-white/10 flex-1 min-h-0 flex flex-col">
                             <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 bg-black/40 text-[9px] md:text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-white/5 shrink-0 text-left">
                                 <span className="w-6 text-center">#</span>
-                                <span>Player</span>
+                                <span>Speler</span>
                                 <span className="text-right">Score</span>
                             </div>
                             <div className="overflow-y-auto scrollbar-hide p-1">
                                 {top10.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500 text-xs italic">No scores yet. Play to be the first!</div>
+                                    <div className="p-8 text-center text-gray-500 text-xs italic">Nog geen scores. Speel om de eerste te zijn!</div>
                                 ) : (
                                     top10.map((entry, idx) => (
                                         <div
@@ -98,7 +98,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                                 <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 text-xs md:text-sm bg-red-900/40 text-yellow-200 font-bold border-t border-yellow-500/20 relative shrink-0 text-left">
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] bg-black px-2 rounded-full text-gray-500">...</div>
                                     <span className="w-6 text-center">{myRank}</span>
-                                    <span className="truncate">You ({user.name})</span>
+                                    <span className="truncate">Jij ({user.name})</span>
                                     <span className="font-mono text-right">{myEntry.highscore.toLocaleString()}</span>
                                 </div>
                             )}
@@ -110,13 +110,13 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                                 onClick={onQuit}
                                 className="flex-1 py-4 md:py-4 rounded-xl bg-gray-800/50 hover:bg-gray-800/80 border border-white/10 text-gray-300 font-bold text-xs md:text-sm transition-colors uppercase tracking-wider"
                             >
-                                QUIT
+                                STOPPEN
                             </button>
                             <button
                                 onClick={onResume}
                                 className="flex-[2] py-4 md:py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold text-sm md:text-base shadow-lg transition-transform transform hover:scale-[1.02] uppercase tracking-wider border border-red-500/30"
                             >
-                                CONTINUE
+                                VERDERGAAN
                             </button>
                         </div>
                     </div>

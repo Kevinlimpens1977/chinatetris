@@ -780,27 +780,29 @@ const App: React.FC = () => {
     // setGameState(GameState.TITLE);
   };
 
-  const startGame = async () => {
+  const startGame = async (bypassCredits: boolean = false) => {
     // CREDIT CHECK
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return; // Should be logged in
 
-    if (credits < 1) {
-      alert("No digital credits left! Purchase digital credits to continue playing.");
+    if (!bypassCredits && credits < 1) {
+      alert("Geen digitale credits meer! Koop digitale credits om verder te spelen.");
       setGameState(GameState.CREDITS);
       return;
     }
 
-    // Deduct Credit (optimistic UI update)
-    const oldCredits = credits;
-    setCredits(prev => Math.max(0, prev - 1));
+    if (!bypassCredits) {
+      // Deduct Credit (optimistic UI update)
+      const oldCredits = credits;
+      setCredits(prev => Math.max(0, prev - 1));
 
-    const success = await deductCredit(authUser.id, oldCredits);
-    if (!success) {
-      // Rollback if failed (rare)
-      setCredits(oldCredits);
-      alert("An error occurred while deducting your digital credit.");
-      return;
+      const success = await deductCredit(authUser.id, oldCredits);
+      if (!success) {
+        // Rollback if failed (rare)
+        setCredits(oldCredits);
+        alert("Er is een fout opgetreden bij het aftrekken van je digitale credit.");
+        return;
+      }
     }
 
     // Play retro credit sound here if feasible
@@ -870,7 +872,7 @@ const App: React.FC = () => {
         <div className="z-50 flex flex-col items-center">
           <div className="text-6xl mb-4 animate-bounce">🐲</div>
           <h2 className="text-[#FFD700] font-arcade text-2xl tracking-widest animate-pulse">
-            LOADING...
+            LADEN...
           </h2>
         </div>
       </div>
@@ -913,6 +915,7 @@ const App: React.FC = () => {
         <DashboardScreen
           user={user}
           onPlay={startGame}
+          onPlayFree={() => startGame(true)}
           onBuyCredits={() => setGameState(GameState.CREDITS)}
           onLogout={handleLogout}
         />

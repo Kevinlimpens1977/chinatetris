@@ -46,7 +46,7 @@ const GhostInfoPanel: React.FC<GhostInfoPanelProps> = ({ onClose }) => {
                         {/* Explanation */}
                         <div className="bg-white/5 rounded-xl p-4 md:p-6 mb-6 border border-yellow-500/20">
                             <p className="text-sm md:text-base text-gray-300 leading-relaxed text-center">
-                                <span className="font-bold text-yellow-400">Ghost stones</span> helpen je zien waar een blokje landt,
+                                <span className="font-bold text-yellow-400">Ghost stenen</span> helpen je zien waar een blokje landt,
                                 maar kosten <span className="font-bold text-red-400">punten</span>.
                                 Hoe hoger het level, hoe hoger de straf.
                                 Vanaf <span className="font-bold text-red-400">level 7</span> kun je ghost weer gebruiken —

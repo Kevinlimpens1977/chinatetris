@@ -77,7 +77,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
         <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#fbbf24_20%,#b91c1c_40%,#fbbf24_60%,#b91c1c_80%,#fbbf24_100%)] animate-spin-slow opacity-60"></div>
         <div className="relative w-full h-full bg-black/80 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-3 md:p-4">
           <div className="text-[9px] md:text-xs font-bold text-yellow-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1 opacity-90">
-            NEXT
+            VOLGENDE
           </div>
           <div className="flex items-center justify-center flex-1 w-full relative z-10">
             {type && (
@@ -118,13 +118,13 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
         <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#dc2626_0%,#ef4444_50%,#dc2626_100%)] animate-spin-slow opacity-70"></div>
         <div className="relative w-full h-full bg-gradient-to-r from-red-900/80 to-orange-900/80 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3 text-center">
           <div className="text-[8px] md:text-[9px] font-bold text-red-200 uppercase tracking-[0.15em] mb-1 flex items-center gap-1 justify-center">
-            <span className="text-sm">👻</span> GHOST ACTIVE
+            <span className="text-sm">👻</span> GHOST ACTIEF
           </div>
           <div className="flex items-baseline gap-1 relative z-10 justify-center">
             <span className="text-lg sm:text-xl md:text-2xl font-mono font-black text-red-300 drop-shadow-md">
               -{penalty}
             </span>
-            <span className="text-[8px] md:text-[10px] text-red-400/80 uppercase">pts</span>
+            <span className="text-[8px] md:text-[10px] text-red-400/80 uppercase">pt</span>
           </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
           </div>
           <div className={`text-[8px] md:text-[9px] font-bold uppercase ${ghostEnabled ? 'text-red-400' : 'text-gray-500'
             }`}>
-            {ghostEnabled ? 'ON' : 'OFF'}
+            {ghostEnabled ? 'AAN' : 'UIT'}
           </div>
         </div>
       </button>
@@ -187,14 +187,14 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
         {/* BONUS TICKETS */}
         <StatBox
           label="Bonus Tickets"
-          value={stats.lotteryTickets}
+          value={stats.bonusTickets}
           color="yellow"
           icon="🎟️"
         />
 
         {/* LINES */}
         <StatBox
-          label="Lines"
+          label="Lijnen"
           value={stats.lines}
           color="green"
           icon="☰"

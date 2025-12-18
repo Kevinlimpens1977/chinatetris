@@ -15,7 +15,7 @@ const AdminCredits: React.FC = () => {
             setAuth(true);
             fetchData();
         } else {
-            alert('Wrong password!');
+            alert('Verkeerd wachtwoord!');
         }
     };
 
@@ -59,16 +59,16 @@ const AdminCredits: React.FC = () => {
         return (
             <div className="flex items-center justify-center min-h-screen bg-black">
                 <div className="bg-[#1a1a1a] p-8 rounded border-2 border-[#C92A2A] text-center">
-                    <h2 className="text-[#FFD700] font-arcade mb-4 uppercase tracking-widest">ADMIN ACCESS</h2>
+                    <h2 className="text-[#FFD700] font-arcade mb-4 uppercase tracking-widest">ADMIN TOEGANG</h2>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="bg-black border border-white text-white p-2 mb-4 w-full"
-                        placeholder="Password"
+                        placeholder="Wachtwoord"
                     />
                     <button onClick={checkPassword} className="bg-[#C92A2A] text-white px-4 py-2 font-bold w-full hover:bg-red-700 uppercase tracking-widest">
-                        LOG IN
+                        INLOGGEN
                     </button>
                 </div>
             </div>
@@ -77,30 +77,30 @@ const AdminCredits: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-fade-in">
-            <TetrisPanel title="GAME PORTAL ADMIN" className="w-full max-w-6xl mx-auto">
+            <TetrisPanel title="GAME PORTAAL ADMIN" className="w-full max-w-6xl mx-auto">
                 <div className="flex gap-4 mb-6">
                     <button
                         onClick={() => setActiveTab('users')}
                         className={`px-4 py-2 font-bold uppercase tracking-widest text-xs ${activeTab === 'users' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
                     >
-                        Players
+                        Spelers
                     </button>
                     <button
                         onClick={() => setActiveTab('payments')}
                         className={`px-4 py-2 font-bold uppercase tracking-widest text-xs ${activeTab === 'payments' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
                     >
-                        Stripe Transactions
+                        Stripe Transacties
                     </button>
                     <button
                         onClick={fetchData}
                         className="ml-auto px-4 py-2 bg-blue-600 text-white font-bold hover:bg-blue-500 uppercase tracking-widest text-xs"
                     >
-                        🔄 Refresh
+                        🔄 Verversen
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="text-center text-[#FFD700] animate-pulse">Loading data...</div>
+                    <div className="text-center text-[#FFD700] animate-pulse">Data laden...</div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -108,18 +108,18 @@ const AdminCredits: React.FC = () => {
                                 <tr>
                                     {activeTab === 'users' ? (
                                         <>
-                                            <th className="p-3">Name</th>
-                                            <th className="p-3">City</th>
+                                            <th className="p-3">Naam</th>
+                                            <th className="p-3">Stad</th>
                                             <th className="p-3">Credits</th>
-                                            <th className="p-3">Last Played</th>
+                                            <th className="p-3">Laatst Gespeeld</th>
                                         </>
                                     ) : (
                                         <>
-                                            <th className="p-3">Amount</th>
+                                            <th className="p-3">Bedrag</th>
                                             <th className="p-3">Status</th>
                                             <th className="p-3">User ID</th>
-                                            <th className="p-3">Credits Issued</th>
-                                            <th className="p-3">Date</th>
+                                            <th className="p-3">Credits Gegeven</th>
+                                            <th className="p-3">Datum</th>
                                         </>
                                     )}
                                 </tr>

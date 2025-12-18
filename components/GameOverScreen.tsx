@@ -76,17 +76,17 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                             <div className="mb-4 text-center">
                                 <p className="text-[10px] md:text-xs text-yellow-100/80 font-medium">
                                     {stats.lotteryTickets > 0
-                                        ? `Great job! You earned ${stats.lotteryTickets} free bonus ticket${stats.lotteryTickets > 1 ? 's' : ''} through your gameplay.`
-                                        : 'Reach 5,000 points to earn free bonus tickets!'}
+                                        ? `Goed gedaan! Je hebt ${stats.lotteryTickets} gratis bonus ticket(s) verdiend door je gameplay.`
+                                        : 'Behaal 5.000 punten om gratis bonus tickets te verdienen!'}
                                 </p>
                                 <p className="text-[9px] text-gray-500 mt-1 italic">
-                                    Bonus tickets are granted for free based on gameplay activity. They cannot be purchased and have no monetary value.
+                                    Bonus tickets worden gratis toegekend op basis van spelactiviteit. Ze kunnen niet worden gekocht en hebben geen geldwaarde.
                                 </p>
                             </div>
 
                             {isNewHigh && (
                                 <div className="animate-bounce bg-yellow-400/20 text-yellow-300 border border-yellow-400/50 p-2 rounded-lg text-xs md:text-sm font-bold uppercase tracking-wider mb-2 shadow-[0_0_15px_rgba(250,204,21,0.3)]">
-                                    🏆 New High Score! 🏆
+                                    🏆 Nieuwe Highscore! 🏆
                                 </div>
                             )}
                         </div>
@@ -95,7 +95,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                         <div className="flex-1 min-h-0 flex flex-col bg-black/40 mx-4 md:mx-8 rounded-xl border border-white/5 relative overflow-hidden mb-4">
                             <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 bg-white/5 text-[9px] md:text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-white/10 shrink-0">
                                 <span className="w-6 text-center">#</span>
-                                <span className="text-left">Player</span>
+                                <span className="text-left">Speler</span>
                                 <span className="text-right">Score</span>
                             </div>
 
@@ -143,10 +143,10 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                                 onClick={onRestart}
                                 className="w-full py-4 md:py-5 rounded-2xl bg-gradient-to-r from-red-600 to-red-800 text-white font-black text-lg md:text-xl tracking-widest hover:from-red-500 hover:to-red-700 transition-all transform hover:scale-[1.02] shadow-[0_0_30px_rgba(220,38,38,0.4)] border border-red-400/30"
                             >
-                                PLAY AGAIN
+                                OPNIEUW SPELEN
                             </button>
                             <p className="text-center text-[10px] text-gray-500 mt-3">
-                                Each game requires 1 digital credit. No payments are donations or crowdfunding. Enjoy your play!
+                                Elk spel vereist 1 digitale credit. Betalingen zijn geen donaties of crowdfunding. Veel plezier!
                             </p>
                         </div>
                     </div>

@@ -58,7 +58,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                     title="Logout"
                 >
                     <span>🚪</span>
-                    <span className="hidden md:inline group-hover:text-red-200 transition-colors">Log out</span>
+                    <span className="hidden md:inline group-hover:text-red-200 transition-colors">Uitloggen</span>
                 </button>
             )}
 
@@ -69,7 +69,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                 <div className="relative inline-block mb-4 animate-float">
                     <div className="absolute inset-0 bg-red-600 blur-md opacity-50 rounded-full"></div>
                     <h2 className="relative text-white drop-shadow-md tracking-[0.2em] text-[10px] md:text-xs font-bold uppercase bg-gradient-to-r from-red-800 to-red-600 px-4 py-1.5 rounded-full border border-red-400/50 shadow-lg">
-                        Premium Digital Gaming
+                        Premium Digitaal Gamen
                     </h2>
                 </div>
 
@@ -101,7 +101,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                                         Ni hao, <span className="font-bold text-white text-lg">{user.name}</span>! 🇨🇳
                                     </p>
                                     <p className="text-[10px] text-gray-400 uppercase tracking-widest">
-                                        Ready for your next challenge?
+                                        Klaar voor je volgende uitdaging?
                                     </p>
                                 </div>
                             )}
@@ -112,7 +112,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                                 className="group relative w-full px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-xl md:text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border border-red-400/30"
                             >
                                 <span className="animate-bounce">🕹️</span>
-                                {user ? 'PLAY GAME' : 'ENTER GAME'}
+                                {user ? 'SPEEL SPEL' : 'START SPEL'}
                                 <span className="animate-bounce delay-100">🐉</span>
                             </button>
 
@@ -122,7 +122,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                                 className="group relative w-full sm:w-auto px-6 py-2 rounded-full bg-gradient-to-r from-yellow-700/80 to-amber-700/80 hover:from-yellow-600 hover:to-amber-600 text-white font-bold text-xs md:text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-yellow-400/20"
                             >
                                 <span className="text-lg">👻</span>
-                                <span>Ghost & Penalty Info</span>
+                                <span>Geest & Strafpunten Info</span>
                             </button>
                         </div>
                     </ChinaContainer>
@@ -138,9 +138,9 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🏆</div>
                             <div>
-                                <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Global Competition</h3>
+                                <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Wereldwijde Competitie</h3>
                                 <p className="text-xs md:text-sm text-yellow-100/80 leading-relaxed">
-                                    Compete with players worldwide and climb to the top of the leaderboard through pure skill and strategy.
+                                    Speel tegen spelers van over de hele wereld en klim naar de top van het klassement door pure vaardigheid en strategie.
                                 </p>
                             </div>
                         </div>
@@ -152,10 +152,10 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                             <div>
                                 <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Bonus Tickets</h3>
                                 <p className="text-xs md:text-sm text-yellow-100/80 leading-relaxed mb-2">
-                                    Earn free bonus tickets based on your gameplay performance.
+                                    Verdien gratis bonus tickets op basis van je gameprestaties.
                                 </p>
                                 <p className="text-[9px] text-gray-500 italic leading-tight">
-                                    Bonus tickets are free rewards for gameplay activity. They cannot be purchased and have no monetary value.
+                                    Bonus tickets zijn gratis beloningen voor spelactiviteit. Ze kunnen niet worden gekocht en hebben geen geldwaarde.
                                 </p>
                             </div>
                         </div>
@@ -167,7 +167,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                     <ChinaContainer className="h-full flex flex-col" noPadding={true}>
                         <div className="bg-red-900/20 p-3 md:p-4 border-b border-red-500/30 flex justify-between items-center shrink-0">
                             <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-white flex items-center gap-2">
-                                <span className="text-lg">📜</span> Top 10 High Scores
+                                <span className="text-lg">📜</span> Top 10 Highscores
                             </span>
                             <span className="text-[10px] text-red-100 font-bold bg-red-600 px-2 py-0.5 rounded shadow-sm animate-pulse">LIVE</span>
                         </div>
@@ -176,7 +176,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                             {leaderboard.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
                                     <span className="text-4xl mb-2 opacity-50">🐉</span>
-                                    <p className="text-sm italic">No scores yet. Be the first!</p>
+                                    <p className="text-sm italic">Nog geen scores. Wees de eerste!</p>
                                 </div>
                             ) : (
                                 <div className="space-y-1">

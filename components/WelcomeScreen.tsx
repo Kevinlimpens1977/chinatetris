@@ -44,24 +44,24 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                                 6px 6px 15px rgba(0,0,0,0.5)
                             `
                         }}>
-                        WELCOME TO<br />THE GAME
+                        WELKOM BIJ<br />HET SPEL
                     </h1>
                 </div>
 
                 {/* Description */}
                 <div className="space-y-6 mb-10 text-gray-200">
                     <p className="text-lg md:text-xl font-medium">
-                        This is a digital game platform.
+                        Dit is een digitaal spelplatform.
                     </p>
                     <p className="text-sm md:text-base opacity-90 leading-relaxed">
-                        You can play games using digital credits. Enjoy a premium arcade experience with high-quality graphics and gameplay.
+                        Je kunt spellen spelen met digitale credits. Geniet van een premium arcade-ervaring met hoogwaardige graphics en gameplay.
                     </p>
                 </div>
 
                 {/* Compliance Disclaimer */}
                 <div className="bg-red-950/30 border border-red-500/30 rounded-xl p-4 mb-8 text-xs text-red-200/80">
                     <p className="font-bold mb-1 uppercase tracking-wider">Disclaimer</p>
-                    <p>No payments are donations or crowdfunding. No purchase guarantees any reward. All transactions are for digital credits used for gameplay access only.</p>
+                    <p>Betalingen zijn geen donaties of crowdfunding. Geen enkele aankoop garandeert een beloning. Alle transacties zijn voor digitale credits die uitsluitend worden gebruikt voor toegang tot het spel.</p>
                 </div>
 
                 {/* Actions */}
@@ -71,7 +71,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                         className="w-full py-4 rounded-xl bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white font-bold text-lg shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all transform hover:scale-105 flex items-center justify-center gap-2 border border-red-500/50"
                     >
                         <span>🕹️</span>
-                        PLAY THE GAME
+                        SPEEL HET SPEL
                     </button>
 
                     <button
@@ -79,12 +79,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                         className="w-full py-3 rounded-xl bg-white text-gray-800 font-bold hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                     >
                         <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                        <span>Login with Google</span>
+                        <span>Inloggen met Google</span>
                     </button>
 
                     <div className="flex items-center gap-2 w-full my-2">
                         <div className="h-px bg-yellow-500/10 flex-1"></div>
-                        <span className="text-[10px] text-yellow-500/30 uppercase">or</span>
+                        <span className="text-[10px] text-yellow-500/30 uppercase">of</span>
                         <div className="h-px bg-yellow-500/10 flex-1"></div>
                     </div>
 
@@ -92,13 +92,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
                         onClick={onLogin}
                         className="w-full py-3 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-200 font-bold transition-colors border border-yellow-500/20 text-sm"
                     >
-                        ALREADY HAVE AN ACCOUNT? LOGIN
+                        HEB JE AL EEN ACCOUNT? LOG IN
                     </button>
                 </div>
 
                 {/* Footer Disclaimer */}
                 <div className="mt-12 pt-6 border-t border-white/5 text-[10px] text-gray-500">
-                    <p>This platform sells digital credits for entertainment access. No payments are donations, investments, or crowdfunding.</p>
+                    <p>Dit platform verkoopt digitale credits voor toegang tot entertainment. Betalingen zijn geen donaties, investeringen of crowdfunding.</p>
                 </div>
             </div>
         </div>
