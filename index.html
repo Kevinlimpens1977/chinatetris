@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>China Sponsor Spel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            arcade: {
+              dark: '#0a0a14',
+              grid: '#1a1a2e',
+              neon: '#00f3ff',
+              purple: '#bc13fe',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
+            display: ['Montserrat', 'Arial Black', 'sans-serif'],
+          },
+          animation: {
+            'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'sleigh': 'sleigh-run 25s linear infinite',
+            'snow-pile': 'snowPile 10s ease-in-out infinite alternate',
+            'lights': 'lights 2s infinite',
+            'spin-slow': 'spin 4s linear infinite',
+            'snow-fall': 'snowFall 5s linear infinite',
+            'scale-bounce': 'scaleBounce 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+            'shimmer': 'shimmer 2s linear infinite',
+            'fade-in': 'fadeIn 0.7s ease-out',
+            'fade-in-up': 'fadeInUp 0.5s ease-out',
+            'bounce-in-out': 'bounceInOut 1.5s ease-in-out',
+            'sparkle': 'sparkle 1s ease-in-out infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'arrow-bounce': 'arrowBounce 2s ease-in-out infinite',
+            'arrow-glow': 'arrowGlow 2s ease-in-out infinite',
+          },
+          keyframes: {
+            arrowBounce: {
+              '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+              '50%': { transform: 'translate(-15px, 15px) rotate(0deg)' }
+            },
+            arrowGlow: {
+              '0%, 100%': { filter: 'drop-shadow(0 0 2px rgba(220, 38, 38, 0.5))' },
+              '50%': { filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-20px)' },
+            },
+            snow: {
+              '0%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(100vh)' }
+            },
+            'sleigh-run': {
+              '0%': { left: '-20%', transform: 'scaleX(1)' },
+              '45%': { left: '110%', transform: 'scaleX(1)' },
+              '50%': { left: '110%', transform: 'scaleX(-1)' },
+              '95%': { left: '-20%', transform: 'scaleX(-1)' },
+              '100%': { left: '-20%', transform: 'scaleX(1)' },
+            },
+            snowPile: {
+              '0%': { height: '8px', transform: 'scaleY(1)' },
+              '100%': { height: '14px', transform: 'scaleY(1.1)' }
+            },
+            lights: {
+              '0%, 100%': { opacity: '1', filter: 'brightness(1.2)' },
+              '50%': { opacity: '0.6', filter: 'brightness(0.8)' }
+            },
+            snowFall: {
+              '0%': { transform: 'translateY(-100%) rotate(0deg)', opacity: '0' },
+              '10%': { opacity: '1' },
+              '90%': { opacity: '1' },
+              '100%': { transform: 'translateY(100vh) rotate(360deg)', opacity: '0' }
+            },
+            scaleBounce: {
+              '0%': { transform: 'scale(0.85)', opacity: '0' },
+              '50%': { transform: 'scale(1.03)' },
+              '100%': { transform: 'scale(1)', opacity: '1' }
+            },
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' }
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' }
+            },
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            bounceInOut: {
+              '0%': { transform: 'scale(0)', opacity: '0' },
+              '50%': { transform: 'scale(1.2)', opacity: '1' },
+              '100%': { transform: 'scale(0)', opacity: '0' }
+            },
+            sparkle: {
+              '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+              '50%': { opacity: '0.7', transform: 'scale(1.15)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #050510;
+      color: white;
+      -webkit-font-smoothing: antialiased;
+      font-family: 'Inter', sans-serif;
+      touch-action: none;
+      /* Disable native touch gestures like scroll/zoom */
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Winter Night Background */
+    .winter-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 80%);
+      z-index: -2;
+    }
+
+    /* Snow Overlay */
+    .snow-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Glassmorphism utility */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Scrollbar hide */
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* --- LAYOUT RULES --- */
+    #game-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2vw;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #playfield-container {
+      position: relative;
+      /* Height logic: min(90vh, 85vw width constraint) */
+      /* Aspect ratio 10/20 = 0.5 */
+      height: 90vh;
+      aspect-ratio: 10/20;
+      max-width: 85vw;
+      /* Fallback constraint */
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    #sidebar {
+      flex: 0 0 15vw;
+      max-width: 20vw;
+      min-width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 2vh;
+      z-index: 10;
+      justify-content: center;
+    }
+
+    /* Mobile Mode - Optimized for larger playfield */
+    @media (max-width: 700px) {
+      #game-wrapper {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100dvh;
+        gap: 1vh;
+        padding: 0.5vh 2vw;
+      }
+
+      #playfield-container {
+        /* Maximize playfield on mobile */
+        width: 95vw;
+        height: auto;
+        aspect-ratio: 10/20;
+        flex: 0 0 auto;
+        max-height: 80dvh;
+        margin-bottom: 0;
+      }
+
+      #sidebar {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 95vw;
+        height: auto;
+        max-height: 15dvh;
+        flex-direction: row;
+        gap: 2vw;
+        justify-content: space-around;
+        padding: 0;
+      }
+    }
+
+    .touch-zone {
+      position: absolute;
+      z-index: 50;
+      /* background: rgba(255,0,0,0.1); Debugging */
+    }
+
+    /* Flyer Zoom Effect */
+    .flyer-zoom-container {
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 40;
+      transform-origin: center center;
+    }
+
+    .flyer-zoom-container:hover {
+      transform: scale(1.5) translate(5%, 5%);
+      /* Adjusted scaled to 1.5 */
+      z-index: 100 !important;
+      box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    /* Ensure it doesn't go off screen on mobile */
+    @media (max-width: 768px) {
+      .flyer-zoom-container:hover {
+        transform: scale(1.1);
+        z-index: 100;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.5);
+        max-width: 90vw;
+        width: 90vw;
+      }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <div class="winter-bg"></div>
+  <div id="snow-container" class="snow-container"></div>
+  <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
