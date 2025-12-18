@@ -210,13 +210,14 @@ const App: React.FC = () => {
             city: city || 'Onbekend',
             email: session.user.email || '',
             tickets: stats?.tickets || 0,
-            highscore: stats?.highscore || 0
+            highscore: stats?.highscore || 0,
+            ticketNames: stats?.ticketNames || []
           });
 
           if (session.user.email_confirmed_at) {
             // Load credits (Non-blocking)
             getCredits(session.user.id).then(c => setCredits(c));
-            setGameState(GameState.DASHBOARD);
+            setGameState(GameState.TITLE);
           }
         }
 
@@ -262,12 +263,17 @@ const App: React.FC = () => {
         if (session?.user) {
           console.log("✅ User Signed In/Refreshed");
 
-          // Hydrate User
+          // Hydrate User with Metadata and Database Stats
           const { name, city } = session.user.user_metadata;
+          const stats = await getUserStats();
+
           setUser({
             name: name || 'Speler',
             city: city || 'Onbekend',
-            email: session.user.email || ''
+            email: session.user.email || '',
+            tickets: stats?.tickets || 0,
+            highscore: stats?.highscore || 0,
+            ticketNames: stats?.ticketNames || []
           });
 
           // Load credits (Non-blocking)
@@ -278,10 +284,8 @@ const App: React.FC = () => {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
 
-          // If currently loading or on login/welcome, go to Dashboard
-          if (isAuthChecking || gameStateRef.current === GameState.LOGIN || gameStateRef.current === GameState.WELCOME || gameStateRef.current === GameState.TITLE) {
-            setGameState(GameState.DASHBOARD);
-          }
+          // If currently loading or on login/welcome, go to TITLE (Dashboard)
+          setGameState(GameState.TITLE);
 
           setIsAuthChecking(false);
           clearTimeout(timer);

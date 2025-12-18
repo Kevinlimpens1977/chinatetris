@@ -133,14 +133,24 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
             <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-8 px-2">
 
                 {/* Left Column: Info Boxes */}
-                <div className="flex flex-col gap-4 md:gap-6">
+                <div className="flex flex-col gap-4 md:gap-6 text-left">
                     <ChinaContainer className="bg-gradient-to-br from-red-950/40 to-black/60">
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🏆</div>
                             <div>
-                                <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Wereldwijde Competitie</h3>
-                                <p className="text-xs md:text-sm text-yellow-100/80 leading-relaxed">
-                                    Speel tegen spelers van over de hele wereld en klim naar de top van het klassement door pure vaardigheid en strategie.
+                                <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Jouw Prestaties</h3>
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Highscore:</span>
+                                        <span className="text-lg md:text-xl font-mono font-black text-white">{(user?.highscore || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Totaal Tickets:</span>
+                                        <span className="text-lg md:text-xl font-mono font-black text-yellow-400">{user?.tickets || 0}</span>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-yellow-100/40 mt-2 leading-tight">
+                                    Je persoonlijke record en totaal aantal verzamelde tickets uit alle gespeelde spellen.
                                 </p>
                             </div>
                         </div>
@@ -150,29 +160,28 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🎟️</div>
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Jouw Bonus Tickets</h3>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-3xl md:text-4xl font-mono font-black text-white drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
-                                        {user?.tickets || 0}
-                                    </span>
-                                    <span className="text-xs text-yellow-100/60 uppercase tracking-widest font-bold">Verdiend</span>
-                                </div>
+                                <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Ticket Collectie</h3>
+                                <div className="text-[10px] text-yellow-100/60 uppercase tracking-widest font-bold mb-2">Unieke ID's in jouw bezit:</div>
 
-                                {user?.ticketNames && user.ticketNames.length > 0 && (
-                                    <div className="mt-3 mb-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                                {user?.ticketNames && user.ticketNames.length > 0 ? (
+                                    <div className="mt-1 mb-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                                         <div className="grid grid-cols-2 gap-2">
                                             {user.ticketNames.map((name, i) => (
-                                                <div key={i} className="bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1 text-[10px] font-mono text-yellow-200 flex items-center gap-1">
+                                                <div key={i} className="bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1 text-[10px] font-mono text-yellow-200 flex items-center gap-1 group/ticket hover:bg-yellow-400/20 transition-colors">
                                                     <span className="opacity-50">#</span>
                                                     {name}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
+                                ) : (
+                                    <div className="py-4 text-center border border-dashed border-white/10 rounded mb-3">
+                                        <p className="text-[10px] text-gray-500 italic">Nog geen unieke tickets gewonnen.</p>
+                                    </div>
                                 )}
 
                                 <p className="text-[9px] text-gray-500 italic leading-tight">
-                                    Elk ticket heeft een uniek ID en geeft kans op extra prijzen. Niet inwisselbaar voor geld.
+                                    Elk ticket geeft kans op extra prijzen in de wekelijkse trekking.
                                 </p>
                             </div>
                         </div>
