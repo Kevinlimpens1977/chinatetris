@@ -214,22 +214,31 @@ export const getLeaderboard = async () => {
             .from('china_players')
             .select('name, city, highscore, lottery_tickets')
             .order('highscore', { ascending: false })
-            .limit(5);
+            .limit(10); // Get more than 5 to ensures we have enough data
 
         if (error) {
             console.error('[getLeaderboard] Error fetching leaderboard:', error);
             return [];
         }
 
-        console.log(`[getLeaderboard] Data received:`, data);
+        console.log(`[getLeaderboard] Data received (${data?.length} entries):`, data);
 
-        // Map database fields to application interface
-        return (data || []).map(entry => ({
-            name: entry.name,
-            city: entry.city,
-            highscore: entry.highscore,
-            bonusTickets: entry.lottery_tickets
-        }));
+        // Map database fields to application interface and ensure top 5 uniques
+        const seenNames = new Set();
+        const uniques = [];
+        for (const entry of (data || [])) {
+            if (!seenNames.has(entry.name)) {
+                seenNames.add(entry.name);
+                uniques.push({
+                    name: entry.name,
+                    city: entry.city,
+                    highscore: entry.highscore,
+                    bonusTickets: entry.lottery_tickets
+                });
+            }
+            if (uniques.length >= 5) break;
+        }
+        return uniques;
     } catch (err) {
         console.error('[getLeaderboard] Unexpected Error:', err);
         return [];
