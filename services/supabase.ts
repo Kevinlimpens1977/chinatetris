@@ -118,26 +118,57 @@ export const submitScore = async (score: number, bonusTickets: number) => {
     // Get metadata safely
     const { name, city } = user.user_metadata;
 
-    // Anonymize certain usernames - replace with 'inlog_speler' if name contains restricted keywords
+    // Anonymize certain usernames
     const rawName = (name || 'Player').toLowerCase();
     const restrictedKeywords = ['sas', 'saskia', 'wierts'];
     const isRestricted = restrictedKeywords.some(keyword => rawName.includes(keyword));
     const displayName = isRestricted ? 'inlog_speler' : (name || 'Player');
 
-    // 1. Update Highscore & Tickets (Global Leaderboard)
-    console.log('[submitScore] Calling update_china_highscore RPC...');
-    const { error: hsError } = await supabase.rpc('update_china_highscore', {
-        p_email: user.email,
-        p_name: displayName,
-        p_city: city || 'Onbekend',
-        p_score: score,
-        p_tickets: bonusTickets
-    });
+    // 1. Update Highscore & Tickets (Global Leaderboard / china_players)
+    // We use a direct query to ensure data is updated correctly
+    try {
+        const { data: currentPlayer } = await supabase
+            .from('china_players')
+            .select('highscore, lottery_tickets')
+            .eq('email', user.email)
+            .maybeSingle();
 
-    if (hsError) {
-        console.error('[submitScore] Error updating highscore:', hsError);
-    } else {
-        console.log('[submitScore] Highscore updated successfully.');
+        const currentHighscore = currentPlayer?.highscore || 0;
+        const currentTickets = currentPlayer?.lottery_tickets || 0;
+
+        const updates: any = {
+            email: user.email,
+            name: displayName,
+            city: city || 'Onbekend',
+            lottery_tickets: currentTickets + bonusTickets,
+            last_played: new Date().toISOString()
+        };
+
+        // Only update highscore if it's better than previous
+        if (score > currentHighscore) {
+            updates.highscore = score;
+        }
+
+        const { error: upsertError } = await supabase
+            .from('china_players')
+            .upsert(updates, { onConflict: 'email' });
+
+        if (upsertError) {
+            console.error('[submitScore] Error upserting to china_players:', upsertError);
+
+            // Fallback to RPC if direct upsert fails (maybe different permissions)
+            await supabase.rpc('update_china_highscore', {
+                p_email: user.email,
+                p_name: displayName,
+                p_city: city || 'Onbekend',
+                p_score: score,
+                p_tickets: bonusTickets
+            });
+        } else {
+            console.log('[submitScore] User stats in china_players updated.');
+        }
+    } catch (err) {
+        console.error('[submitScore] Unexpected error in highscore update:', err);
     }
 
     // 1b. Issue individual tickets in the database with names
@@ -178,20 +209,7 @@ export const getLeaderboard = async () => {
             return [];
         }
 
-        if (!data) return [];
-        console.log(`[getLeaderboard] Fetched ${data.length} entries.`);
-
-        // Filter unique names (keep highest score per name)
-        const seenNames = new Set();
-        const uniqueLeaderboard = [];
-
-        for (const entry of data) {
-            if (!seenNames.has(entry.name)) {
-                seenNames.add(entry.name);
-                uniqueLeaderboard.push(entry);
-            }
-        }
-        return uniqueLeaderboard;
+        return data || [];
     } catch (err) {
         console.error('[getLeaderboard] Unexpected Error:', err);
         return [];
