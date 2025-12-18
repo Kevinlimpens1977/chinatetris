@@ -21,7 +21,7 @@ import GlobalFooter from './components/GlobalFooter';
 import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { supabase, submitScore, getLeaderboard, ensurePlayerVerified } from './services/supabase';
+import { supabase, submitScore, getLeaderboard, ensurePlayerVerified, getUserStats } from './services/supabase';
 
 // -- Gravity Function: Professional 10-level system --
 const getGravityForLevel = (level: number): number => {
@@ -196,10 +196,13 @@ const App: React.FC = () => {
         if (session?.user) {
           console.log("👤 Existing Session Found");
           const { name, city } = session.user.user_metadata;
+          const stats = await getUserStats();
           setUser({
             name: name || 'Speler',
             city: city || 'Onbekend',
-            email: session.user.email || ''
+            email: session.user.email || '',
+            tickets: stats?.tickets || 0,
+            highscore: stats?.highscore || 0
           });
 
           if (session.user.email_confirmed_at) {
@@ -508,6 +511,16 @@ const App: React.FC = () => {
 
     // Update local stats first so UI can show it
     setStats(prev => ({ ...prev, bonusTickets: tickets }));
+
+    // Update user state for TitleScreen
+    setUser(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        tickets: (prev.tickets || 0) + tickets,
+        highscore: Math.max(prev.highscore || 0, newScore)
+      };
+    });
 
     // Submit to Supabase
     await submitScore(newScore, tickets);

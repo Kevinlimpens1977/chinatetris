@@ -19,6 +19,8 @@ export interface UserData {
   name: string;
   email: string;
   city: string;
+  tickets?: number;
+  highscore?: number;
 }
 
 export interface HighScore {

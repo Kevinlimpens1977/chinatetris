@@ -26,10 +26,86 @@ export interface Player {
     name: string;
     city: string;
     highscore: number;
-    bonus_tickets: number;
+    bonus_tickets: number; // For TitleScreen display
     last_played: string;
     is_verified: boolean;
 }
+
+const generateTicketId = (index: number): string => {
+    // index starts at 0
+    // Ticket_A_100 to 999 (900 tickets)
+    // Then Ticket_B_101 to 999...
+    const batchSizeA = 900;
+    if (index < batchSizeA) {
+        const itemIndex = index + 100;
+        return `Ticket_A_${itemIndex}`;
+    }
+
+    const indexAfterA = index - batchSizeA;
+    const batchSizeOther = 899; // 101 to 999
+    const batchIndex = Math.floor(indexAfterA / batchSizeOther) + 1; // 1 is 'B'
+    const itemIndex = (indexAfterA % batchSizeOther) + 101;
+
+    const batchLetter = String.fromCharCode(65 + batchIndex);
+    return `Ticket_${batchLetter}_${itemIndex}`;
+};
+
+export const getUserStats = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+        .from('china_players')
+        .select('highscore, lottery_tickets')
+        .eq('email', user.email)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[getUserStats] Error:', error);
+        return null;
+    }
+
+    return {
+        highscore: data?.highscore || 0,
+        tickets: data?.lottery_tickets || 0
+    };
+};
+
+export const issueTickets = async (userId: string, email: string, count: number) => {
+    if (count <= 0) return;
+
+    try {
+        // Get current total tickets across all users to determine names
+        const { count: totalTickets, error: countError } = await supabase
+            .from('china_issued_tickets')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError && countError.code !== 'PGRST116') {
+            console.error('[issueTickets] Count Error:', countError);
+        }
+
+        const startIdx = totalTickets || 0;
+        const newTickets = [];
+
+        for (let i = 0; i < count; i++) {
+            newTickets.push({
+                user_id: userId,
+                email: email,
+                ticket_name: generateTicketId(startIdx + i)
+            });
+        }
+
+        const { error: insertError } = await supabase
+            .from('china_issued_tickets')
+            .insert(newTickets);
+
+        if (insertError) {
+            console.error('[issueTickets] Insert Error:', insertError);
+        }
+    } catch (err) {
+        console.error('[issueTickets] Unexpected Error:', err);
+    }
+};
 
 export const submitScore = async (score: number, bonusTickets: number) => {
     console.log(`[submitScore] Input: score=${score}, bonusTickets=${bonusTickets}`);
@@ -64,6 +140,11 @@ export const submitScore = async (score: number, bonusTickets: number) => {
         console.log('[submitScore] Highscore updated successfully.');
     }
 
+    // 1b. Issue individual tickets in the database with names
+    if (bonusTickets > 0) {
+        await issueTickets(user.id, user.email, bonusTickets);
+    }
+
     // 2. Record specific game play
     console.log('[submitScore] Inserting game play stats...');
     const { error: playError } = await supabase
@@ -90,7 +171,7 @@ export const getLeaderboard = async () => {
             .from('china_players')
             .select('name, city, highscore, lottery_tickets')
             .order('highscore', { ascending: false })
-            .limit(50);
+            .limit(5);
 
         if (error) {
             console.error('[getLeaderboard] Error fetching leaderboard:', error);

@@ -150,10 +150,13 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🎟️</div>
                             <div>
-                                <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Bonus Tickets</h3>
-                                <p className="text-xs md:text-sm text-yellow-100/80 leading-relaxed mb-2">
-                                    Verdien gratis bonus tickets op basis van je gameprestaties.
-                                </p>
+                                <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Jouw Bonus Tickets</h3>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="text-3xl md:text-4xl font-mono font-black text-white drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                                        {user?.tickets || 0}
+                                    </span>
+                                    <span className="text-xs text-yellow-100/60 uppercase tracking-widest font-bold">Verdiend</span>
+                                </div>
                                 <p className="text-[9px] text-gray-500 italic leading-tight">
                                     Bonus tickets zijn gratis beloningen voor spelactiviteit. Ze kunnen niet worden gekocht en hebben geen geldwaarde.
                                 </p>
@@ -167,7 +170,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                     <ChinaContainer className="h-full flex flex-col" noPadding={true}>
                         <div className="bg-red-900/20 p-3 md:p-4 border-b border-red-500/30 flex justify-between items-center shrink-0">
                             <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-white flex items-center gap-2">
-                                <span className="text-lg">📜</span> Top 10 Highscores
+                                <span className="text-lg">📜</span> Top 5 Highscores
                             </span>
                             <span className="text-[10px] text-red-100 font-bold bg-red-600 px-2 py-0.5 rounded shadow-sm animate-pulse">LIVE</span>
                         </div>
