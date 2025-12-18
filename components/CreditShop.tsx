@@ -32,13 +32,13 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h2 className="text-3xl md:text-4xl font-bold text-[#FFD700] font-arcade tracking-wider mb-2 drop-shadow-md">
-                        CREDIT SHOP
+                        DIGITAL CREDIT STORE
                     </h2>
                     <p className="text-white/80 text-lg">
-                        Steun onze reis en speel verder!
+                        Purchase digital credits to unlock gameplay access.
                     </p>
                     <div className="flex justify-center gap-4 mt-4 text-2xl">
-                        🏮 🧧 🏮
+                        🎮 🕹️ 🎮
                     </div>
                 </div>
 
@@ -51,7 +51,7 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
                         className="group relative flex flex-col items-center p-4 bg-[#1a1a1a] border-2 border-[#C92A2A] hover:border-[#FFD700] hover:-translate-y-1 transition-all rounded-lg"
                     >
                         <span className="text-4xl mb-2">💎</span>
-                        <h3 className="text-xl font-bold text-white mb-1">1 Credit</h3>
+                        <h3 className="text-xl font-bold text-white mb-1">1 Digital Credit</h3>
                         <p className="text-[#FFD700] font-bold text-lg">€5,00</p>
                         <div className="absolute inset-0 bg-[#FFD700]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
                     </button>
@@ -63,10 +63,10 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
                         className="group relative flex flex-col items-center p-4 bg-[#1a1a1a] border-2 border-[#C92A2A] hover:border-[#FFD700] hover:-translate-y-1 transition-all rounded-lg"
                     >
                         <div className="absolute -top-3 bg-[#FFD700] text-black text-xs font-bold px-2 py-0.5 rounded shadow">
-                            POPULAIR
+                            BEST VALUE
                         </div>
                         <span className="text-4xl mb-2">💎💎</span>
-                        <h3 className="text-xl font-bold text-white mb-1">2 Credits</h3>
+                        <h3 className="text-xl font-bold text-white mb-1">2 Digital Credits</h3>
                         <p className="text-[#FFD700] font-bold text-lg">€10,00</p>
                         <div className="absolute inset-0 bg-[#FFD700]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
                     </button>
@@ -77,22 +77,27 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
                         disabled={loading}
                         className="group relative flex flex-col items-center p-4 bg-[#1a1a1a] border-2 border-[#C92A2A] hover:border-[#FFD700] hover:-translate-y-1 transition-all rounded-lg"
                     >
-                        <span className="text-4xl mb-2">💝</span>
-                        <h3 className="text-xl font-bold text-white mb-1">Sponsor</h3>
-                        <p className="text-[#FFD700] font-bold text-lg">Kies bedrag</p>
+                        <span className="text-4xl mb-2">🎁</span>
+                        <h3 className="text-xl font-bold text-white mb-1">Custom Bundle</h3>
+                        <p className="text-[#FFD700] font-bold text-lg">Choose Amount</p>
                         <span className="text-xs text-white/50 mt-1">Min. €15</span>
                         <div className="absolute inset-0 bg-[#FFD700]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
                     </button>
                 </div>
 
+                {/* Compliance Statement */}
+                <div className="text-[10px] text-gray-500 text-center mb-6 px-4">
+                    <p>All payments are for digital credits used exclusively for gameplay. No payments are donations, crowdfunding, or investments. No purchase guarantees any reward.</p>
+                </div>
+
                 {/* DEV BUTTON */}
                 {onDevPlay && (
-                    <div className="flex justify-center mb-6">
+                    <div className="flex justify-center">
                         <button
                             onClick={onDevPlay}
                             className="text-[10px] text-gray-500 hover:text-white uppercase tracking-widest border border-gray-500/30 px-3 py-1 rounded hover:bg-white/5 transition-all"
                         >
-                            ondanks nul credits toch spelen
+                            Developer Test Play
                         </button>
                     </div>
                 )}
@@ -100,7 +105,7 @@ const CreditShop: React.FC<CreditShopProps> = ({ onClose, onDevPlay }) => {
                 {/* Loading State */}
                 {loading && (
                     <div className="text-center text-[#FFD700] animate-pulse my-4 font-bold">
-                        Even geduld, we openen de betaalpagina...
+                        Connecting to secure payment gateway...
                     </div>
                 )}
 

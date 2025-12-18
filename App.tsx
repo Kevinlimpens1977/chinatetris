@@ -17,9 +17,10 @@ import CreditSuccessScreen from './components/CreditSuccessScreen';
 import CreditCancelScreen from './components/CreditCancelScreen';
 import DashboardScreen from './components/DashboardScreen';
 import AdminCredits from './components/AdminCredits';
+import GlobalFooter from './components/GlobalFooter';
 import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
-import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, LOTTERY_THRESHOLDS } from './constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
 import { supabase, submitScore, getLeaderboard, ensurePlayerVerified } from './services/supabase';
 
 // -- Gravity Function: Professional 10-level system --
@@ -106,7 +107,7 @@ const App: React.FC = () => {
     score: 0,
     lines: 0,
     level: 1,
-    lotteryTickets: 0
+    bonusTickets: 0
   });
 
   // Ghost piece control - default OFF, allowed for levels 1-2 and 7-10
@@ -497,19 +498,18 @@ const App: React.FC = () => {
 
     const newScore = statsRef.current.score;
 
-    // Calculate Lottery Tickets
+    // Calculate Bonus Tickets
     let tickets = 0;
-    if (newScore >= LOTTERY_THRESHOLDS.TIER_3) tickets = 5;
-    else if (newScore >= LOTTERY_THRESHOLDS.TIER_2) tickets = 2;
-    else if (newScore >= LOTTERY_THRESHOLDS.TIER_1) tickets = 1;
+    if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
+    else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
+    else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_1) tickets = 1;
 
-    console.log(`🎮 Game Over! Score: ${newScore}, Tickets Earned: ${tickets}`);
+    console.log(`🎮 Game Over! Score: ${newScore}, Bonus Tickets Earned: ${tickets}`);
 
     // Update local stats first so UI can show it
-    setStats(prev => ({ ...prev, lotteryTickets: tickets }));
+    setStats(prev => ({ ...prev, bonusTickets: tickets }));
 
-    // Submit to Supabase - Note: We probably need to update submitScore to handle tickets if the backend supports it
-    // For now we just submit score, assuming tickets are derived or added later
+    // Submit to Supabase
     await submitScore(newScore, tickets);
 
     // Refresh Leaderboard
@@ -786,7 +786,7 @@ const App: React.FC = () => {
     if (!authUser) return; // Should be logged in
 
     if (credits < 1) {
-      alert("Je hebt geen credits meer! Koop nieuwe credits om te spelen.");
+      alert("No digital credits left! Purchase digital credits to continue playing.");
       setGameState(GameState.CREDITS);
       return;
     }
@@ -799,7 +799,7 @@ const App: React.FC = () => {
     if (!success) {
       // Rollback if failed (rare)
       setCredits(oldCredits);
-      alert("Er ging iets mis met het afboeken van je credit.");
+      alert("An error occurred while deducting your digital credit.");
       return;
     }
 
@@ -807,8 +807,8 @@ const App: React.FC = () => {
     // const audio = new Audio('/sounds/coin.mp3'); audio.play();
 
     setGrid(Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(0)));
-    setStats({ score: 0, lines: 0, level: 1, lotteryTickets: 0 });
-    statsRef.current = { score: 0, lines: 0, level: 1, lotteryTickets: 0 };
+    setStats({ score: 0, lines: 0, level: 1, bonusTickets: 0 });
+    statsRef.current = { score: 0, lines: 0, level: 1, bonusTickets: 0 };
 
     dropIntervalRef.current = getGravityForLevel(1); // Use gravity function
     setGhostEnabled(false); // Ghost starts OFF - user must enable manually
@@ -870,7 +870,7 @@ const App: React.FC = () => {
         <div className="z-50 flex flex-col items-center">
           <div className="text-6xl mb-4 animate-bounce">🐲</div>
           <h2 className="text-[#FFD700] font-arcade text-2xl tracking-widest animate-pulse">
-            LADEN...
+            LOADING...
           </h2>
         </div>
       </div>
@@ -1073,6 +1073,8 @@ const App: React.FC = () => {
         <DebugPanel currentLevel={stats.level} visible={showDebugPanel} />
       )}
 
+      {/* Footer Disclaimer */}
+      <GlobalFooter />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { Tetromino, TetrominoType } from './types';
 export const BOARD_WIDTH = 10;
 export const BOARD_HEIGHT = 20;
 
-// Kas China Sponsor Game / Oriental Palette
+// Digital Game / Oriental Palette
 export const COLORS = {
   I: '#00e5ff', // Cyan (Modern China Neon)
   J: '#1e40af', // Deep Blue
@@ -25,11 +25,11 @@ export const GLOWS = {
   Z: '#fca5a5',
 };
 
-// Lottery Thresholds (Config)
-export const LOTTERY_THRESHOLDS = {
-  TIER_1: 5000,   // 1 Ticket
-  TIER_2: 15000,  // 2 Tickets
-  TIER_3: 30000   // 5 Tickets
+// Bonus Ticket Thresholds (Config)
+export const BONUS_TICKET_THRESHOLDS = {
+  TIER_1: 5000,   // 1 Bonus Ticket
+  TIER_2: 15000,  // 2 Bonus Tickets
+  TIER_3: 30000   // 5 Bonus Tickets
 };
 
 export const TETROMINOS: Record<TetrominoType, Tetromino> = {

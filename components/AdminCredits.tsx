@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import TetrisPanel from './TetrisPanel';
 
@@ -15,7 +15,7 @@ const AdminCredits: React.FC = () => {
             setAuth(true);
             fetchData();
         } else {
-            alert('Fout wachtwoord!');
+            alert('Wrong password!');
         }
     };
 
@@ -25,7 +25,6 @@ const AdminCredits: React.FC = () => {
 
         try {
             // 1. Fetch Users (Profiles)
-            console.log('[AdminCredits] Fetching profiles...');
             const { data: profiles, error: profilesError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -34,25 +33,16 @@ const AdminCredits: React.FC = () => {
             if (profilesError) {
                 console.error('[AdminCredits] Profiles Fetch Error:', profilesError);
             } else {
-                console.log(`[AdminCredits] Profiles fetched: ${profiles?.length || 0}`);
                 setUsers(profiles || []);
             }
 
-            // 2. Fetch Payments via Edge Function
-            console.log('[AdminCredits] Fetching payments (MOCKED)...');
-
-            // MOCK BEHAVIOR: Return empty list as requested.
+            // 2. Fetch Payments (Mocked for current requirement)
             const paymentsData = { payments: [] };
             const paymentsError = null;
-
-            /* ORIGINAL: 
-            const { data: paymentsData, error: paymentsError } = await supabase.functions.invoke('list-payments');
-            */
 
             if (paymentsError) {
                 console.error('[AdminCredits] Payments Fetch Error:', paymentsError);
             } else {
-                console.log(`[AdminCredits] Payments fetched: ${paymentsData?.payments?.length || 0}`);
                 if (paymentsData?.payments) {
                     setPayments(paymentsData.payments);
                 }
@@ -69,16 +59,16 @@ const AdminCredits: React.FC = () => {
         return (
             <div className="flex items-center justify-center min-h-screen bg-black">
                 <div className="bg-[#1a1a1a] p-8 rounded border-2 border-[#C92A2A] text-center">
-                    <h2 className="text-[#FFD700] font-arcade mb-4">ADMIN TOEGANG</h2>
+                    <h2 className="text-[#FFD700] font-arcade mb-4 uppercase tracking-widest">ADMIN ACCESS</h2>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="bg-black border border-white text-white p-2 mb-4 w-full"
-                        placeholder="Wachtwoord"
+                        placeholder="Password"
                     />
-                    <button onClick={checkPassword} className="bg-[#C92A2A] text-white px-4 py-2 font-bold w-full hover:bg-red-700">
-                        INLOGGEN
+                    <button onClick={checkPassword} className="bg-[#C92A2A] text-white px-4 py-2 font-bold w-full hover:bg-red-700 uppercase tracking-widest">
+                        LOG IN
                     </button>
                 </div>
             </div>
@@ -87,49 +77,49 @@ const AdminCredits: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-fade-in">
-            <TetrisPanel title="CAS CHINA ADMIN" className="w-full max-w-6xl mx-auto">
+            <TetrisPanel title="GAME PORTAL ADMIN" className="w-full max-w-6xl mx-auto">
                 <div className="flex gap-4 mb-6">
                     <button
                         onClick={() => setActiveTab('users')}
-                        className={`px-4 py-2 font-bold ${activeTab === 'users' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
+                        className={`px-4 py-2 font-bold uppercase tracking-widest text-xs ${activeTab === 'users' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
                     >
-                        Spelers
+                        Players
                     </button>
                     <button
                         onClick={() => setActiveTab('payments')}
-                        className={`px-4 py-2 font-bold ${activeTab === 'payments' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
+                        className={`px-4 py-2 font-bold uppercase tracking-widest text-xs ${activeTab === 'payments' ? 'bg-[#FFD700] text-black' : 'bg-[#333] text-white'}`}
                     >
-                        Transacties (Stripe)
+                        Stripe Transactions
                     </button>
                     <button
                         onClick={fetchData}
-                        className="ml-auto px-4 py-2 bg-blue-600 text-white font-bold hover:bg-blue-500"
+                        className="ml-auto px-4 py-2 bg-blue-600 text-white font-bold hover:bg-blue-500 uppercase tracking-widest text-xs"
                     >
-                        🔄 Verversen
+                        🔄 Refresh
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="text-center text-[#FFD700] animate-pulse">Laden van data...</div>
+                    <div className="text-center text-[#FFD700] animate-pulse">Loading data...</div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-[#333] text-[#FFD700] font-arcade">
+                            <thead className="bg-[#333] text-[#FFD700] font-arcade uppercase tracking-widest text-[10px]">
                                 <tr>
                                     {activeTab === 'users' ? (
                                         <>
-                                            <th className="p-3">Naam</th>
-                                            <th className="p-3">Stad</th>
+                                            <th className="p-3">Name</th>
+                                            <th className="p-3">City</th>
                                             <th className="p-3">Credits</th>
-                                            <th className="p-3">Laatst gespeeld</th>
+                                            <th className="p-3">Last Played</th>
                                         </>
                                     ) : (
                                         <>
-                                            <th className="p-3">Bedrag</th>
+                                            <th className="p-3">Amount</th>
                                             <th className="p-3">Status</th>
                                             <th className="p-3">User ID</th>
-                                            <th className="p-3">Credits Gekocht</th>
-                                            <th className="p-3">Datum</th>
+                                            <th className="p-3">Credits Issued</th>
+                                            <th className="p-3">Date</th>
                                         </>
                                     )}
                                 </tr>

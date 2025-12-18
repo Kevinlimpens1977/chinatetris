@@ -26,13 +26,13 @@ export interface Player {
     name: string;
     city: string;
     highscore: number;
-    lottery_tickets: number; // New field
+    bonus_tickets: number;
     last_played: string;
     is_verified: boolean;
 }
 
-export const submitScore = async (score: number, tickets: number) => {
-    console.log(`[submitScore] Input: score=${score}, tickets=${tickets}`);
+export const submitScore = async (score: number, bonusTickets: number) => {
+    console.log(`[submitScore] Input: score=${score}, bonusTickets=${bonusTickets}`);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !user.email) {
         console.warn('[submitScore] No authenticated user found.');
@@ -43,25 +43,23 @@ export const submitScore = async (score: number, tickets: number) => {
     const { name, city } = user.user_metadata;
 
     // Anonymize certain usernames - replace with 'inlog_speler' if name contains restricted keywords
-    const rawName = (name || 'Speler').toLowerCase();
+    const rawName = (name || 'Player').toLowerCase();
     const restrictedKeywords = ['sas', 'saskia', 'wierts'];
     const isRestricted = restrictedKeywords.some(keyword => rawName.includes(keyword));
-    const displayName = isRestricted ? 'inlog_speler' : (name || 'Speler');
+    const displayName = isRestricted ? 'inlog_speler' : (name || 'Player');
 
-    // 1. Update Highscore & Tickets (Global China Leaderboard)
-    // We try to call the new RPC, or fallback to direct upset if we can (but RPC is safer for atomic)
-    // For now we assume the SQL migration "china_tables.sql" has been run.
+    // 1. Update Highscore & Tickets (Global Leaderboard)
     console.log('[submitScore] Calling update_china_highscore RPC...');
     const { error: hsError } = await supabase.rpc('update_china_highscore', {
         p_email: user.email,
         p_name: displayName,
         p_city: city || 'Onbekend',
         p_score: score,
-        p_tickets: tickets
+        p_tickets: bonusTickets
     });
 
     if (hsError) {
-        console.error('[submitScore] Error updating china highscore:', hsError);
+        console.error('[submitScore] Error updating highscore:', hsError);
     } else {
         console.log('[submitScore] Highscore updated successfully.');
     }
@@ -69,17 +67,17 @@ export const submitScore = async (score: number, tickets: number) => {
     // 2. Record specific game play
     console.log('[submitScore] Inserting game play stats...');
     const { error: playError } = await supabase
-        .from('china_game_plays') // NEW TABLE
+        .from('china_game_plays')
         .insert({
             user_id: user.id,
             email: user.email,
             score: score,
-            tickets_earned: tickets,
+            tickets_earned: bonusTickets,
             played_at: new Date().toISOString()
         });
 
     if (playError) {
-        console.warn('[submitScore] Could not save china game play stats:', playError);
+        console.warn('[submitScore] Could not save game play stats:', playError);
     } else {
         console.log('[submitScore] Game play stats saved.');
     }
@@ -89,13 +87,13 @@ export const getLeaderboard = async () => {
     console.log('[getLeaderboard] Fetching leaderboard...');
     try {
         const { data, error } = await supabase
-            .from('china_players') // NEW TABLE
+            .from('china_players')
             .select('name, city, highscore, lottery_tickets')
             .order('highscore', { ascending: false })
             .limit(50);
 
         if (error) {
-            console.error('[getLeaderboard] Error fetching china leaderboard:', error);
+            console.error('[getLeaderboard] Error fetching leaderboard:', error);
             return [];
         }
 
@@ -119,15 +117,6 @@ export const getLeaderboard = async () => {
     }
 };
 
-
-// Kept for backward compat or if needed, but not primarily used for china tables
 export const ensurePlayerVerified = async (email: string) => {
     // In the new system, we trust the auth verification for now
-    // But we can still update the old table if needed, or update china_players
-    /*
-    const { error } = await supabase
-        .from('china_players')
-        .update({ is_verified: true })
-        .eq('email', email);
-    */
 };

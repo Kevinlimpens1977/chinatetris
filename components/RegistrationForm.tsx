@@ -25,12 +25,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
     if (!formData.name || !formData.city || !formData.email || !formData.password) return;
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Wachtwoorden komen niet overeen');
+      setError('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Wachtwoord moet minimaal 6 tekens lang zijn');
+      setError('Password must be at least 6 characters long');
       return;
     }
 
@@ -38,7 +38,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
     setError(null);
 
     try {
-      // 1. Create Supabase Auth User with real password
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -47,20 +46,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
             name: formData.name,
             city: formData.city
           }
-          // emailRedirectTo will use the Site URL from Supabase dashboard
         }
       });
 
       if (authError) throw authError;
-
-
-
-      // 3. Show success screen (Email confirmation required)
       setSuccess(true);
 
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Er ging iets mis bij het registreren.');
+      setError(err.message || 'Something went wrong during registration.');
     } finally {
       setLoading(false);
     }
@@ -77,31 +71,31 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
       if (error) throw error;
     } catch (error) {
       console.error('Error signing up with Google:', error);
-      setError('Kon niet registreren met Google.');
+      setError('Could not register with Google.');
     }
   };
 
   if (success) {
     return (
-      <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6">
-        <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20 text-center">
+      <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6 text-center">
+        <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20">
           <div className="text-5xl mb-4">📩</div>
-          <h2 className="text-2xl font-bold text-white mb-4">Check je e-mail!</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Check your email!</h2>
           <p className="text-gray-300 mb-4">
-            We hebben een bevestigingslink gestuurd naar <span className="text-cyan-400 font-bold">{formData.email}</span>.
+            We have sent a verification link to <span className="text-cyan-400 font-bold">{formData.email}</span>.
           </p>
-          <div className="bg-cyan-900/30 border border-cyan-500/50 rounded-xl p-4 mb-6">
+          <div className="bg-cyan-900/30 border border-cyan-500/50 rounded-xl p-4 mb-6 text-left">
             <p className="text-sm text-cyan-200 leading-relaxed">
-              <strong className="text-cyan-300">📌 Belangrijk:</strong><br />
-              Klik op de link in je email om je account te activeren.
-              <strong className="text-white"> Daarna kun je inloggen met je wachtwoord!</strong>
+              <strong className="text-cyan-300">📌 Important:</strong><br />
+              Click the link in your email to activate your account.
+              <strong className="text-white"> Then you can log in to play!</strong>
             </p>
           </div>
           <button
             onClick={onGoToLogin}
             className="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition-all transform hover:scale-105"
           >
-            Naar inloggen
+            Go to Login
           </button>
         </div>
       </div>
@@ -111,11 +105,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
   return (
     <div className="relative z-20 flex flex-col items-center justify-center w-full h-full animate-fade-in p-6">
       <div className="glass-panel p-8 rounded-3xl max-w-md w-full shadow-2xl border border-white/20 relative">
-        {/* Festive Decor */}
-        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-5xl">🏮</div>
+        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-5xl">🎮</div>
 
-        <h2 className="text-2xl font-bold text-center mb-6 mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-300">
-          Spelersregistratie
+        <h2 className="text-2xl font-bold text-center mb-6 mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-300 uppercase tracking-widest">
+          Player Registration
         </h2>
 
         {error && (
@@ -130,55 +123,55 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
             className="w-full py-3 rounded-xl bg-white text-gray-800 font-bold hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg mb-4"
           >
             <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-            <span>Registreer met Google</span>
+            <span>Register with Google</span>
           </button>
 
           <div className="flex items-center gap-2 w-full">
             <div className="h-px bg-white/20 flex-1"></div>
-            <span className="text-xs text-white/40 uppercase">of vul je gegevens in</span>
+            <span className="text-[10px] text-white/40 uppercase tracking-widest">or enter details</span>
             <div className="h-px bg-white/20 flex-1"></div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Naam</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Name</label>
             <input
               type="text"
               required
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Je naam"
+              placeholder="Your name"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Woonplaats</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">City</label>
             <input
               type="text"
               required
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.city}
               onChange={e => setFormData({ ...formData, city: e.target.value })}
-              placeholder="Bijv. Heerlen"
+              placeholder="e.g. London"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Email Adres</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Email Address</label>
             <input
               type="email"
               required
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
-              placeholder="naam@voorbeeld.nl"
+              placeholder="name@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Wachtwoord</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Password</label>
             <input
               type="password"
               required
@@ -186,12 +179,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.password}
               onChange={e => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Minimaal 6 tekens"
+              placeholder="Min. 6 characters"
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-cyan-200 mb-2">Bevestig Wachtwoord</label>
+            <label className="block text-[10px] uppercase tracking-widest text-cyan-200 mb-1 font-bold">Confirm Password</label>
             <input
               type="password"
               required
@@ -199,12 +192,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
               value={formData.confirmPassword}
               onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder="Herhaal wachtwoord"
+              placeholder="Confirm password"
             />
           </div>
 
-          <div className="text-xs text-gray-400 text-center leading-relaxed mt-2">
-            Je ontvangt een verificatie-email. Pas na verificatie kun je spelen!
+          <div className="text-[10px] text-gray-400 text-center leading-relaxed mt-2 uppercase tracking-tight">
+            Verification email will be sent. Account must be verified to play.
           </div>
 
           <div className="flex gap-4 pt-4">
@@ -212,16 +205,16 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, onBack, o
               type="button"
               onClick={onBack}
               disabled={loading}
-              className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors disabled:opacity-50"
+              className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors disabled:opacity-50 text-xs"
             >
-              Terug
+              BACK
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+              className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:transform-none text-xs"
             >
-              {loading ? 'Bezig...' : 'REGISTREREN'}
+              {loading ? 'PROCESSING...' : 'REGISTER'}
             </button>
           </div>
         </form>

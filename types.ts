@@ -30,7 +30,7 @@ export interface LeaderboardEntry {
   name: string;
   city: string;
   highscore: number;
-  lotteryTickets?: number; // Optional as it might not be in all queries
+  bonusTickets?: number;
 }
 
 export type TetrominoType = 'I' | 'J' | 'L' | 'O' | 'S' | 'T' | 'Z';
@@ -46,14 +46,14 @@ export interface PlayerStats {
   score: number;
   lines: number;
   level: number;
-  lotteryTickets: number;
+  bonusTickets: number;
 }
 
 export type ActionType = 'ROTATE' | 'DROP' | 'MOVE' | 'LOCK' | 'NONE';
 
 export interface GameAction {
   type: ActionType;
-  id: number; // Timestamp to trigger unique effects
+  id: number;
   payload?: {
     x?: number;
     y?: number;
