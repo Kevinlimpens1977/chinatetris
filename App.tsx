@@ -261,34 +261,42 @@ const App: React.FC = () => {
         setIsAuthChecking(false);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          console.log("✅ User Signed In/Refreshed");
+          console.log("✅ User Signed In/Refreshed. Initializing profile...");
 
-          // Hydrate User with Metadata and Database Stats
-          const { name, city } = session.user.user_metadata;
-          const stats = await getUserStats();
+          (async () => {
+            try {
+              const { name, city } = session.user.user_metadata;
+              const stats = await getUserStats().catch(e => {
+                console.warn("Stats fetch failed during login, using defaults.");
+                return null;
+              });
 
-          setUser({
-            name: name || 'Speler',
-            city: city || 'Onbekend',
-            email: session.user.email || '',
-            tickets: stats?.tickets || 0,
-            highscore: stats?.highscore || 0,
-            ticketNames: stats?.ticketNames || []
-          });
+              setUser({
+                name: name || 'Speler',
+                city: city || 'Onbekend',
+                email: session.user.email || '',
+                tickets: stats?.tickets || 0,
+                highscore: stats?.highscore || 0,
+                ticketNames: stats?.ticketNames || []
+              });
 
-          // Build-in refresh of global data
-          getLeaderboard().then(lb => setLeaderboard(lb));
+              // Refresh global bits
+              getLeaderboard().then(lb => setLeaderboard(lb));
+              getCredits(session.user.id).then(c => setCredits(c));
 
-          // Clear URL Hash if present (Auth successful)
-          if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
+              if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
 
-          // If currently loading or on login/welcome, go to TITLE (Dashboard)
-          setGameState(GameState.TITLE);
-
-          setIsAuthChecking(false);
-          clearTimeout(timer);
+              setGameState(GameState.TITLE);
+            } catch (err) {
+              console.error("Hydration failed:", err);
+              setGameState(GameState.TITLE); // Carry on regardless
+            } finally {
+              setIsAuthChecking(false);
+              clearTimeout(timer);
+            }
+          })();
         }
       }
     });
