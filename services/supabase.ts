@@ -50,8 +50,8 @@ const generateTicketId = (index: number): string => {
     return `Ticket_${batchLetter}_${itemIndex}`;
 };
 
-export const getUserStats = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+export const getUserStats = async (providedUser?: any) => {
+    const user = providedUser || (await supabase.auth.getUser()).data.user;
     if (!user || !user.email) return null;
 
     console.log(`[getUserStats] Fetching stats for ${user.email}...`);
