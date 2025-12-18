@@ -52,34 +52,51 @@ const generateTicketId = (index: number): string => {
 
 export const getUserStats = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user || !user.email) return null;
 
-    // 1. Fetch Highscore and Ticket Count
-    const { data: statsData, error: statsError } = await supabase
-        .from('china_players')
-        .select('highscore, lottery_tickets')
-        .eq('email', user.email)
-        .maybeSingle();
+    console.log(`[getUserStats] Fetching stats for ${user.email}...`);
 
-    if (statsError) {
-        console.error('[getUserStats] Stats Error:', statsError);
-    }
-
-    // 2. Fetch Unique Ticket Names
+    // 1. Fetch Unique Ticket Names (Source of truth for tickets)
     const { data: ticketIds, error: idsError } = await supabase
         .from('china_issued_tickets')
         .select('ticket_name')
         .eq('email', user.email)
         .order('created_at', { ascending: true });
 
-    if (idsError) {
-        console.error('[getUserStats] IDs Error:', idsError);
+    if (idsError) console.error('[getUserStats] IDs Error:', idsError);
+    const names = (ticketIds || []).map(t => t.ticket_name);
+
+    // 2. Fetch Highscore from summary table
+    const { data: statsData, error: statsError } = await supabase
+        .from('china_players')
+        .select('highscore, lottery_tickets')
+        .eq('email', user.email)
+        .maybeSingle();
+
+    if (statsError) console.error('[getUserStats] Stats Error:', statsError);
+
+    let highscore = statsData?.highscore || 0;
+
+    // 3. Fallback: If highscore is 0, check game history (maybe sync failed earlier)
+    if (highscore === 0) {
+        console.log('[getUserStats] Highscore is 0 in summary, checking game history...');
+        const { data: playData } = await supabase
+            .from('china_game_plays')
+            .select('score')
+            .eq('email', user.email)
+            .order('score', { ascending: false })
+            .limit(1);
+
+        if (playData && playData.length > 0) {
+            highscore = playData[0].score;
+            console.log(`[getUserStats] Found highscore in history: ${highscore}`);
+        }
     }
 
     return {
-        highscore: statsData?.highscore || 0,
-        tickets: statsData?.lottery_tickets || 0,
-        ticketNames: (ticketIds || []).map(t => t.ticket_name)
+        highscore: highscore,
+        tickets: names.length, // Always use actual count
+        ticketNames: names
     };
 };
 
