@@ -276,8 +276,8 @@ const App: React.FC = () => {
             ticketNames: stats?.ticketNames || []
           });
 
-          // Load credits (Non-blocking)
-          getCredits(session.user.id).then(c => setCredits(c));
+          // Build-in refresh of global data
+          getLeaderboard().then(lb => setLeaderboard(lb));
 
           // Clear URL Hash if present (Auth successful)
           if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {

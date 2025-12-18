@@ -208,37 +208,27 @@ export const submitScore = async (score: number, bonusTickets: number) => {
 };
 
 export const getLeaderboard = async () => {
-    console.log('[getLeaderboard] Fetching leaderboard...');
+    console.log('[getLeaderboard] Fetching global top 5 scores...');
     try {
         const { data, error } = await supabase
             .from('china_players')
             .select('name, city, highscore, lottery_tickets')
             .order('highscore', { ascending: false })
-            .limit(10); // Get more than 5 to ensures we have enough data
+            .limit(5);
 
         if (error) {
             console.error('[getLeaderboard] Error fetching leaderboard:', error);
             return [];
         }
 
-        console.log(`[getLeaderboard] Data received (${data?.length} entries):`, data);
+        console.log(`[getLeaderboard] Success: ${data?.length} scores found.`);
 
-        // Map database fields to application interface and ensure top 5 uniques
-        const seenNames = new Set();
-        const uniques = [];
-        for (const entry of (data || [])) {
-            if (!seenNames.has(entry.name)) {
-                seenNames.add(entry.name);
-                uniques.push({
-                    name: entry.name,
-                    city: entry.city,
-                    highscore: entry.highscore,
-                    bonusTickets: entry.lottery_tickets
-                });
-            }
-            if (uniques.length >= 5) break;
-        }
-        return uniques;
+        return (data || []).map(entry => ({
+            name: entry.name,
+            city: entry.city,
+            highscore: entry.highscore,
+            bonusTickets: entry.lottery_tickets
+        }));
     } catch (err) {
         console.error('[getLeaderboard] Unexpected Error:', err);
         return [];
