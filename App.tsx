@@ -165,108 +165,136 @@ const App: React.FC = () => {
   useEffect(() => { clearingLinesRef.current = clearingLines; }, [clearingLines]);
   useEffect(() => { ghostEnabledRef.current = ghostEnabled; }, [ghostEnabled]);
 
-  // --- Consolidated Auth Logic ---
+  // --- Consolidated Auth & Init Logic ---
   useEffect(() => {
-    let authSubscription: any = null;
-
-    const setupAuth = async () => {
-      // 1. Instantly register listener to catch all events (including redirect processing)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log(`🔐 Auth Event: ${event}`);
-
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setGameState(GameState.WELCOME);
-          setIsAuthChecking(false);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-          if (session?.user) {
-            console.log(`✅ User Session Active (${event}). Hydrating...`);
-
-            try {
-              const { name, city } = session.user.user_metadata;
-              // Pass the user directly to avoid extra fetch/hangs
-              const stats = await getUserStats(session.user).catch(() => null);
-
-              setUser({
-                name: name || 'Speler',
-                city: city || 'Onbekend',
-                email: session.user.email || '',
-                tickets: stats?.tickets || 0,
-                highscore: stats?.highscore || 0,
-                ticketNames: stats?.ticketNames || []
-              });
-
-              // Background tasks
-              getLeaderboard().then(lb => setLeaderboard(lb));
-              getCredits(session.user.id).then(c => setCredits(c));
-
-              // Clean URL if we came from a redirect
-              if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-              }
-
-              // Always move to TITLE if we have a valid confirmed session
-              if (session.user.email_confirmed_at) {
-                setGameState(GameState.TITLE);
-              } else {
-                setGameState(GameState.WELCOME);
-              }
-            } catch (err) {
-              console.error("Hydration failed", err);
-              setGameState(GameState.TITLE);
-            } finally {
-              setIsAuthChecking(false);
-            }
-          } else {
-            // No user in session
-            if (event === 'INITIAL_SESSION') setIsAuthChecking(false);
-          }
-        }
-      });
-
-      authSubscription = subscription;
-
-      // 2. Initial setup tasks
+    const initApp = async () => {
       try {
-        // Fetch leaderboard immediately
-        getLeaderboard().then(lb => setLeaderboard(lb));
+        // 1. Fetch Leaderboard (Non-blocking background)
+        getLeaderboard().then(lb => setLeaderboard(lb)).catch(e => console.warn('Leaderboard fetch failed', e));
 
-        // Check for specific admin route
-        if (window.location.pathname === '/admin/credits') {
-          setGameState(GameState.ADMIN_CREDITS);
-          setIsAuthChecking(false);
+        // 2. Check for pending Auth Redirects (Hash or Code)
+        const hash = window.location.hash;
+        const search = window.location.search;
+        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
+
+        if (hasAuthParams) {
+          console.log("⏳ Auth Redirect detected. Waiting for Supabase to handle session...");
+          // We do NOT manual setSession anymore. We let detectSessionInUrl do it.
+          // We just wait for the onAuthStateChange event to fire.
           return;
         }
 
-        // Handle payment success/cancel states
+        // 3. Handle Stripe/Payment Redirects
         const params = new URLSearchParams(window.location.search);
         if (params.get('status') === 'success') {
-          window.history.replaceState({}, '', '/');
+          window.history.replaceState({}, '', '/'); // Clean URL
+          console.log("Stripe Success detected");
           setGameState(GameState.CREDITS_SUCCESS);
           setIsAuthChecking(false);
+          return;
         } else if (params.get('status') === 'canceled') {
           window.history.replaceState({}, '', '/');
           setGameState(GameState.CREDITS_CANCEL);
           setIsAuthChecking(false);
+          return;
         }
+
+        // 4. Check Existing Session (Normal Load)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log("👤 Existing Session Found");
+          const { name, city } = session.user.user_metadata;
+          const stats = await getUserStats();
+          setUser({
+            name: name || 'Speler',
+            city: city || 'Onbekend',
+            email: session.user.email || '',
+            tickets: stats?.tickets || 0,
+            highscore: stats?.highscore || 0,
+            ticketNames: stats?.ticketNames || []
+          });
+
+          if (session.user.email_confirmed_at) {
+            // Load credits (Non-blocking)
+            getCredits(session.user.id).then(c => setCredits(c));
+            setGameState(GameState.TITLE);
+          }
+        }
+
+        // 5. Check for Admin Route (Simple client-side routing check)
+        if (window.location.pathname === '/admin/credits') {
+          setGameState(GameState.ADMIN_CREDITS);
+          return;
+        }
+
       } catch (err) {
-        console.error("Init Error:", err);
-        setIsAuthChecking(false);
+        console.error("Initialization Error:", err);
+      } finally {
+        // If NOT waiting for auth params, stop loading
+        const hash = window.location.hash;
+        const search = window.location.search;
+        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
+
+        if (!hasAuthParams) {
+          setIsAuthChecking(false);
+        }
       }
     };
 
-    setupAuth();
+    initApp();
 
-    // 5s Failsafe to show the UI even if Supabase is silent
+    // Failsafe: If waiting for auth params but nothing happens for 5s, stop loading
     const timer = setTimeout(() => {
       setIsAuthChecking(prev => {
-        if (prev) console.warn("⚠️ Auth Timeout reached");
+        if (prev) console.warn("⚠️ Auth Check Timeout (Native Detection)");
         return false;
       });
     }, 5000);
 
+    // 5. Setup Auth Listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`🔐 Auth Event: ${event}`);
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setGameState(GameState.WELCOME);
+        setIsAuthChecking(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          console.log("✅ User Signed In/Refreshed");
+
+          // Hydrate User with Metadata and Database Stats
+          const { name, city } = session.user.user_metadata;
+          const stats = await getUserStats();
+
+          setUser({
+            name: name || 'Speler',
+            city: city || 'Onbekend',
+            email: session.user.email || '',
+            tickets: stats?.tickets || 0,
+            highscore: stats?.highscore || 0,
+            ticketNames: stats?.ticketNames || []
+          });
+
+          // Build-in refresh of global data
+          getLeaderboard().then(lb => setLeaderboard(lb));
+
+          // Clear URL Hash if present (Auth successful)
+          if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+
+          // If currently loading or on login/welcome, go to TITLE (Dashboard)
+          setGameState(GameState.TITLE);
+
+          setIsAuthChecking(false);
+          clearTimeout(timer);
+        }
+      }
+    });
+
     return () => {
-      if (authSubscription) authSubscription.unsubscribe();
+      authListener.subscription.unsubscribe();
       clearTimeout(timer);
     };
   }, []); // Run once on mount

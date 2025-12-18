@@ -50,8 +50,8 @@ const generateTicketId = (index: number): string => {
     return `Ticket_${batchLetter}_${itemIndex}`;
 };
 
-export const getUserStats = async (providedUser?: any) => {
-    const user = providedUser || (await supabase.auth.getUser()).data.user;
+export const getUserStats = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user || !user.email) return null;
 
     console.log(`[getUserStats] Fetching stats for ${user.email}...`);
@@ -227,83 +227,25 @@ export const submitScore = async (score: number, bonusTickets: number) => {
 export const getLeaderboard = async () => {
     console.log('[getLeaderboard] Fetching global top 5 scores...');
     try {
-        // 1. Try to get from the optimized summary table first
-        const { data: summaryData, error: summaryError } = await supabase
+        const { data, error } = await supabase
             .from('china_players')
             .select('name, city, highscore, lottery_tickets')
             .order('highscore', { ascending: false })
             .limit(5);
 
-        if (!summaryError && summaryData && summaryData.length > 0) {
-            console.log(`[getLeaderboard] Found ${summaryData.length} entries in summary table.`);
-            return summaryData.map(entry => ({
-                name: entry.name,
-                city: entry.city,
-                highscore: entry.highscore,
-                bonusTickets: entry.lottery_tickets
-            }));
+        if (error) {
+            console.error('[getLeaderboard] Error fetching leaderboard:', error);
+            return [];
         }
 
-        // 2. Fallback: If summary is empty/error, aggregate from raw game plays
-        console.log('[getLeaderboard] Summary table empty, falling back to raw game plays...');
-        const { data: rawPlays, error: rawError } = await supabase
-            .from('china_game_plays')
-            .select(`
-                score,
-                email,
-                china_players!inner (
-                    name,
-                    city
-                )
-            `)
-            .order('score', { ascending: false })
-            .limit(20); // Fetch more to filter uniques manually
+        console.log(`[getLeaderboard] Success: ${data?.length} scores found.`);
 
-        if (rawError) {
-            // Last resort: simple fetch from game plays without join if join fails
-            const { data: simplePlays } = await supabase
-                .from('china_game_plays')
-                .select('score, email')
-                .order('score', { ascending: false })
-                .limit(10);
-
-            if (!simplePlays) return [];
-
-            const seen = new Set();
-            const result = [];
-            for (const p of simplePlays) {
-                if (!seen.has(p.email)) {
-                    seen.add(p.email);
-                    result.push({
-                        name: p.email.split('@')[0], // Fallback name
-                        city: 'Onbekend',
-                        highscore: p.score,
-                        bonusTickets: 0
-                    });
-                }
-                if (result.length >= 5) break;
-            }
-            return result;
-        }
-
-        // Process raw plays with joins
-        const seenEmails = new Set();
-        const uniques = [];
-        for (const p of (rawPlays || [])) {
-            if (!seenEmails.has(p.email)) {
-                seenEmails.add(p.email);
-                const playerInfo = (p as any).china_players;
-                uniques.push({
-                    name: playerInfo?.name || p.email.split('@')[0],
-                    city: playerInfo?.city || 'Onbekend',
-                    highscore: p.score,
-                    bonusTickets: 0
-                });
-            }
-            if (uniques.length >= 5) break;
-        }
-        return uniques;
-
+        return (data || []).map(entry => ({
+            name: entry.name,
+            city: entry.city,
+            highscore: entry.highscore,
+            bonusTickets: entry.lottery_tickets
+        }));
     } catch (err) {
         console.error('[getLeaderboard] Unexpected Error:', err);
         return [];
