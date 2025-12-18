@@ -57,6 +57,14 @@ const isGhostAllowedForLevel = (level: number): boolean => {
   return level <= 2 || level >= 7;
 };
 
+// -- Calculate Bonus Tickets based on score --
+const calculateBonusTickets = (score: number): number => {
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_3) return 5;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_2) return 2;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_1) return 1;
+  return 0;
+};
+
 // -- Helper for shape rotation --
 const rotateMatrix = (matrix: number[][]) => {
   const N = matrix.length;
@@ -367,7 +375,8 @@ const App: React.FC = () => {
 
         setStats({
           ...currentStats,
-          score: newScore
+          score: newScore,
+          bonusTickets: calculateBonusTickets(newScore)
         });
 
         // Trigger floating penalty animation
@@ -438,12 +447,18 @@ const App: React.FC = () => {
 
     const leveledUp = newLevel > currentStats.level;
 
+    const nextScore = currentStats.score + points;
+    const nextTickets = calculateBonusTickets(nextScore);
+
+    console.log(`[processClearedLines] Score: ${nextScore}, Tickets: ${nextTickets}`);
+
     // Update stats (score persists across levels)
     setStats({
       ...currentStats,
-      score: currentStats.score + points,
+      score: nextScore,
       lines: newLines,
-      level: newLevel
+      level: newLevel,
+      bonusTickets: nextTickets
     });
 
     // Update gravity for new level
@@ -501,7 +516,7 @@ const App: React.FC = () => {
 
     const newScore = statsRef.current.score;
 
-    // Calculate Bonus Tickets
+    // Live Ticket Calculation for storage
     let tickets = 0;
     if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
     else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
