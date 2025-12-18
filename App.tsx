@@ -540,6 +540,17 @@ const App: React.FC = () => {
     // Submit to Supabase
     await submitScore(newScore, tickets);
 
+    // Fetch latest user data (including new ticket IDs)
+    const latestStats = await getUserStats();
+    if (latestStats) {
+      setUser(prev => ({
+        ...prev!,
+        tickets: latestStats.tickets,
+        highscore: latestStats.highscore,
+        ticketNames: latestStats.ticketNames
+      }));
+    }
+
     // Refresh Leaderboard
     const newLeaderboard = await getLeaderboard();
     setLeaderboard(newLeaderboard);

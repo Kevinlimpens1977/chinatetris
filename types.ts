@@ -21,6 +21,7 @@ export interface UserData {
   city: string;
   tickets?: number;
   highscore?: number;
+  ticketNames?: string[];
 }
 
 export interface HighScore {

@@ -54,20 +54,32 @@ export const getUserStats = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await supabase
+    // 1. Fetch Highscore and Ticket Count
+    const { data: statsData, error: statsError } = await supabase
         .from('china_players')
         .select('highscore, lottery_tickets')
         .eq('email', user.email)
         .maybeSingle();
 
-    if (error) {
-        console.error('[getUserStats] Error:', error);
-        return null;
+    if (statsError) {
+        console.error('[getUserStats] Stats Error:', statsError);
+    }
+
+    // 2. Fetch Unique Ticket Names
+    const { data: ticketIds, error: idsError } = await supabase
+        .from('china_issued_tickets')
+        .select('ticket_name')
+        .eq('email', user.email)
+        .order('created_at', { ascending: true });
+
+    if (idsError) {
+        console.error('[getUserStats] IDs Error:', idsError);
     }
 
     return {
-        highscore: data?.highscore || 0,
-        tickets: data?.lottery_tickets || 0
+        highscore: statsData?.highscore || 0,
+        tickets: statsData?.lottery_tickets || 0,
+        ticketNames: (ticketIds || []).map(t => t.ticket_name)
     };
 };
 

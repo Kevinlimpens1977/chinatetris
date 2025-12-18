@@ -149,7 +149,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                     <ChinaContainer className="bg-gradient-to-br from-yellow-950/40 to-black/60" delay={200}>
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🎟️</div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                                 <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Jouw Bonus Tickets</h3>
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className="text-3xl md:text-4xl font-mono font-black text-white drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
@@ -157,8 +157,22 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, o
                                     </span>
                                     <span className="text-xs text-yellow-100/60 uppercase tracking-widest font-bold">Verdiend</span>
                                 </div>
+
+                                {user?.ticketNames && user.ticketNames.length > 0 && (
+                                    <div className="mt-3 mb-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {user.ticketNames.map((name, i) => (
+                                                <div key={i} className="bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1 text-[10px] font-mono text-yellow-200 flex items-center gap-1">
+                                                    <span className="opacity-50">#</span>
+                                                    {name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <p className="text-[9px] text-gray-500 italic leading-tight">
-                                    Bonus tickets zijn gratis beloningen voor spelactiviteit. Ze kunnen niet worden gekocht en hebben geen geldwaarde.
+                                    Elk ticket heeft een uniek ID en geeft kans op extra prijzen. Niet inwisselbaar voor geld.
                                 </p>
                             </div>
                         </div>
