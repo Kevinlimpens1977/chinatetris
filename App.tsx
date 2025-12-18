@@ -261,34 +261,43 @@ const App: React.FC = () => {
         setIsAuthChecking(false);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          console.log("✅ User Signed In/Refreshed");
+          console.log("✅ User Signed In/Refreshed - Hydrating...");
 
-          // Hydrate User with Metadata and Database Stats
-          const { name, city } = session.user.user_metadata;
-          const stats = await getUserStats();
+          try {
+            // Hydrate User with Metadata and Database Stats
+            const { name, full_name, city } = session.user.user_metadata;
+            const stats = await getUserStats();
 
-          setUser({
-            name: name || 'Speler',
-            city: city || 'Onbekend',
-            email: session.user.email || '',
-            tickets: stats?.tickets || 0,
-            highscore: stats?.highscore || 0,
-            ticketNames: stats?.ticketNames || []
-          });
+            setUser({
+              name: name || full_name || 'Speler',
+              city: city || 'Onbekend',
+              email: session.user.email || '',
+              tickets: stats?.tickets || 0,
+              highscore: stats?.highscore || 0,
+              ticketNames: stats?.ticketNames || []
+            });
 
-          // Build-in refresh of global data
-          getLeaderboard().then(lb => setLeaderboard(lb));
+            // Load credits (Non-blocking)
+            getCredits(session.user.id).then(c => setCredits(c));
 
-          // Clear URL Hash if present (Auth successful)
-          if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Build-in refresh of global data
+            getLeaderboard().then(lb => setLeaderboard(lb));
+
+            // Clear URL Hash if present (Auth successful)
+            if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Only transition to TITLE if we are coming from a non-playing state
+            if (isAuthChecking || [GameState.WELCOME, GameState.LOGIN, GameState.REGISTRATION].includes(gameStateRef.current)) {
+              setGameState(GameState.TITLE);
+            }
+          } catch (err) {
+            console.error("Hydration Error during Auth Change:", err);
+          } finally {
+            setIsAuthChecking(false);
+            clearTimeout(timer);
           }
-
-          // If currently loading or on login/welcome, go to TITLE (Dashboard)
-          setGameState(GameState.TITLE);
-
-          setIsAuthChecking(false);
-          clearTimeout(timer);
         }
       }
     });
