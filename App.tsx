@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import WelcomeScreen from './components/WelcomeScreen';
-import LoginScreen from './components/LoginScreen';
-import ForgotPasswordScreen from './components/ForgotPasswordScreen';
-import ResetPasswordScreen from './components/ResetPasswordScreen';
 import TitleScreen from './components/TitleScreen';
-import RegistrationForm from './components/RegistrationForm';
 import HUD from './components/HUD';
 import GameBoard from './components/GameBoard';
 import GameOverScreen from './components/GameOverScreen';
@@ -12,16 +7,10 @@ import LevelUpScreen from './components/LevelUpScreen';
 import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
-import CreditShop from './components/CreditShop';
-import CreditSuccessScreen from './components/CreditSuccessScreen';
-import CreditCancelScreen from './components/CreditCancelScreen';
-import DashboardScreen from './components/DashboardScreen';
-import AdminCredits from './components/AdminCredits';
 import GlobalFooter from './components/GlobalFooter';
-import { getCredits, deductCredit } from './services/credits';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { supabase, submitScore, getLeaderboard, ensurePlayerVerified, getUserStats } from './services/supabase';
+import { submitScore, getLeaderboard, getUserStats, ANONYMOUS_USER } from './services/backend';
 
 // -- Gravity Function: Professional 10-level system --
 const getGravityForLevel = (level: number): number => {
@@ -88,13 +77,11 @@ const getShapeMatrix = (type: TetrominoType, rotation: number) => {
 
 const App: React.FC = () => {
   // --- State ---
-  const [gameState, setGameState] = useState<GameState>(GameState.WELCOME);
+  const [gameState, setGameState] = useState<GameState>(GameState.TITLE);
   const [user, setUser] = useState<UserData | null>(null);
-  const [credits, setCredits] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [isAuthChecking, setIsAuthChecking] = useState(true); // New loading state
 
   // Game State
   const [grid, setGrid] = useState<(string | number)[][]>(
@@ -165,147 +152,34 @@ const App: React.FC = () => {
   useEffect(() => { clearingLinesRef.current = clearingLines; }, [clearingLines]);
   useEffect(() => { ghostEnabledRef.current = ghostEnabled; }, [ghostEnabled]);
 
-  // --- Consolidated Auth & Init Logic ---
+  // --- Consolidated Initialization Logic (Purely Anonymous) ---
   useEffect(() => {
     const initApp = async () => {
       try {
-        // 1. Fetch Leaderboard (Non-blocking background)
-        getLeaderboard().then(lb => setLeaderboard(lb)).catch(e => console.warn('Leaderboard fetch failed', e));
+        console.log("🚀 Initializing Anonymous Session...");
 
-        // 2. Check for pending Auth Redirects (Hash or Code)
-        const hash = window.location.hash;
-        const search = window.location.search;
-        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
+        // 1. Fetch Leaderboard
+        const lb = await getLeaderboard();
+        setLeaderboard(lb);
 
-        if (hasAuthParams) {
-          console.log("⏳ Auth Redirect detected. Waiting for Supabase to handle session...");
-          // We do NOT manual setSession anymore. We let detectSessionInUrl do it.
-          // We just wait for the onAuthStateChange event to fire.
-          return;
-        }
+        // 2. Load Anonymous User Stats
+        const stats = await getUserStats();
 
-        // 3. Handle Stripe/Payment Redirects
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('status') === 'success') {
-          window.history.replaceState({}, '', '/'); // Clean URL
-          console.log("Stripe Success detected");
-          setGameState(GameState.CREDITS_SUCCESS);
-          setIsAuthChecking(false);
-          return;
-        } else if (params.get('status') === 'canceled') {
-          window.history.replaceState({}, '', '/');
-          setGameState(GameState.CREDITS_CANCEL);
-          setIsAuthChecking(false);
-          return;
-        }
-
-        // 4. Check Existing Session (Normal Load)
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          console.log("👤 Existing Session Found");
-          const { name, city } = session.user.user_metadata;
-          const stats = await getUserStats();
-          setUser({
-            name: name || 'Speler',
-            city: city || 'Onbekend',
-            email: session.user.email || '',
-            tickets: stats?.tickets || 0,
-            highscore: stats?.highscore || 0,
-            ticketNames: stats?.ticketNames || []
-          });
-
-          if (session.user.email_confirmed_at) {
-            // Load credits (Non-blocking)
-            getCredits(session.user.id).then(c => setCredits(c));
-            setGameState(GameState.TITLE);
-          }
-        }
-
-        // 5. Check for Admin Route (Simple client-side routing check)
-        if (window.location.pathname === '/admin/credits') {
-          setGameState(GameState.ADMIN_CREDITS);
-          return;
-        }
+        setUser({
+          name: ANONYMOUS_USER.user_metadata.name,
+          city: ANONYMOUS_USER.user_metadata.city,
+          email: ANONYMOUS_USER.email,
+          tickets: stats?.tickets || 0,
+          highscore: stats?.highscore || 0,
+          ticketNames: stats?.ticketNames || []
+        });
 
       } catch (err) {
         console.error("Initialization Error:", err);
-      } finally {
-        // If NOT waiting for auth params, stop loading
-        const hash = window.location.hash;
-        const search = window.location.search;
-        const hasAuthParams = (hash && hash.includes('access_token')) || (search && search.includes('code'));
-
-        if (!hasAuthParams) {
-          setIsAuthChecking(false);
-        }
       }
     };
 
     initApp();
-
-    // Failsafe: If waiting for auth params but nothing happens for 5s, stop loading
-    const timer = setTimeout(() => {
-      setIsAuthChecking(prev => {
-        if (prev) console.warn("⚠️ Auth Check Timeout (Native Detection)");
-        return false;
-      });
-    }, 5000);
-
-    // 5. Setup Auth Listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔐 Auth Event: ${event}`);
-
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setGameState(GameState.WELCOME);
-        setIsAuthChecking(false);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) {
-          console.log("✅ User Signed In/Refreshed - Hydrating...");
-
-          try {
-            // Hydrate User with Metadata and Database Stats
-            const { name, full_name, city } = session.user.user_metadata;
-            const stats = await getUserStats();
-
-            setUser({
-              name: name || full_name || 'Speler',
-              city: city || 'Onbekend',
-              email: session.user.email || '',
-              tickets: stats?.tickets || 0,
-              highscore: stats?.highscore || 0,
-              ticketNames: stats?.ticketNames || []
-            });
-
-            // Load credits (Non-blocking)
-            getCredits(session.user.id).then(c => setCredits(c));
-
-            // Build-in refresh of global data
-            getLeaderboard().then(lb => setLeaderboard(lb));
-
-            // Clear URL Hash if present (Auth successful)
-            if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
-              window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            // Only transition to TITLE if we are coming from a non-playing state
-            if (isAuthChecking || [GameState.WELCOME, GameState.LOGIN, GameState.REGISTRATION].includes(gameStateRef.current)) {
-              setGameState(GameState.TITLE);
-            }
-          } catch (err) {
-            console.error("Hydration Error during Auth Change:", err);
-          } finally {
-            setIsAuthChecking(false);
-            clearTimeout(timer);
-          }
-        }
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-      clearTimeout(timer);
-    };
   }, []); // Run once on mount
 
   // --- Logic ---
@@ -799,63 +673,12 @@ const App: React.FC = () => {
 
   // --- Flow ---
   const handleStartClick = async () => {
-    // Check if we have a user from Supabase session
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-
-    if (authUser && authUser.email_confirmed_at) {
-      // Ensure local state is synced
-      const { name, city } = authUser.user_metadata;
-      setUser({
-        name: name || 'Speler',
-        city: city || 'Onbekend',
-        email: authUser.email || ''
-      });
-      startGame();
-    } else {
-      setGameState(GameState.REGISTRATION);
-    }
+    // In anonymous mode, we always just start the game.
+    startGame();
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setGameState(GameState.WELCOME);
-  };
 
-  const handleRegistration = (data: UserData) => {
-    // RegistrationForm handles the Supabase signup. 
-    // After success, it shows "Check Email". 
-    // We don't auto-login here because they need to verify first.
-    // So we might just go back to Title or stay there.
-    // Actually RegistrationForm handles its own success state.
-    // If we want to force them back to title:
-    // setGameState(GameState.TITLE);
-  };
-
-  const startGame = async (bypassCredits: boolean = false) => {
-    // CREDIT CHECK
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return; // Should be logged in
-
-    if (!bypassCredits && credits < 1) {
-      alert("Geen digitale credits meer! Koop digitale credits om verder te spelen.");
-      setGameState(GameState.CREDITS);
-      return;
-    }
-
-    if (!bypassCredits) {
-      // Deduct Credit (optimistic UI update)
-      const oldCredits = credits;
-      setCredits(prev => Math.max(0, prev - 1));
-
-      const success = await deductCredit(authUser.id, oldCredits);
-      if (!success) {
-        // Rollback if failed (rare)
-        setCredits(oldCredits);
-        alert("Er is een fout opgetreden bij het aftrekken van je digitale credit.");
-        return;
-      }
-    }
+  const startGame = async () => {
 
     // Play retro credit sound here if feasible
     // const audio = new Audio('/sounds/coin.mp3'); audio.play();
@@ -915,21 +738,6 @@ const App: React.FC = () => {
     spawnPiece();
   };
 
-  // --- Render ---
-
-  if (isAuthChecking) {
-    return (
-      <div className="relative w-full h-[100dvh] flex flex-col items-center justify-center bg-black overflow-hidden">
-        <ChinaBackground ref={backgroundRef} />
-        <div className="z-50 flex flex-col items-center">
-          <div className="text-6xl mb-4 animate-bounce">🐲</div>
-          <h2 className="text-[#FFD700] font-arcade text-2xl tracking-widest animate-pulse">
-            LADEN...
-          </h2>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative w-full h-[100dvh] flex flex-col bg-transparent overflow-hidden touch-none overscroll-none select-none">
@@ -937,41 +745,7 @@ const App: React.FC = () => {
       {/* Background Ambience */}
       <ChinaBackground ref={backgroundRef} />
 
-      {/* Credit Badge REMOVED */}
-
-      {/* Credit Screens */}
-      {gameState === GameState.CREDITS && (
-        <CreditShop onClose={() => setGameState(GameState.TITLE)} />
-      )}
-      {gameState === GameState.ADMIN_CREDITS && (
-        <AdminCredits />
-      )}
-
-      {gameState === GameState.CREDITS_SUCCESS && (
-        <CreditSuccessScreen onContinue={async () => {
-          // Refresh credits
-          const { data: { user: authUser } } = await supabase.auth.getUser();
-          if (authUser) {
-            const c = await getCredits(authUser.id);
-            setCredits(c);
-          }
-          setGameState(GameState.TITLE);
-        }} />
-      )}
-      {gameState === GameState.CREDITS_CANCEL && (
-        <CreditCancelScreen onBack={() => setGameState(GameState.DASHBOARD)} />
-      )}
-
-      {/* DASHBOARD */}
-      {gameState === GameState.DASHBOARD && user && (
-        <DashboardScreen
-          user={user}
-          onPlay={startGame}
-          onPlayFree={() => startGame(true)}
-          onBuyCredits={() => setGameState(GameState.CREDITS)}
-          onLogout={handleLogout}
-        />
-      )}
+      {/* Credit and Dashboard screens are removed */}
 
       {/* Close Button - Top-left on mobile, top-right on desktop */}
       {gameState === GameState.PLAYING && (
@@ -1001,47 +775,11 @@ const App: React.FC = () => {
         />
       )}
 
-      {gameState === GameState.WELCOME && (
-        <WelcomeScreen
-          onLogin={() => setGameState(GameState.LOGIN)}
-          onRegister={() => setGameState(GameState.REGISTRATION)}
-        />
-      )}
-
-      {gameState === GameState.LOGIN && (
-        <LoginScreen
-          onBack={() => setGameState(GameState.WELCOME)}
-          onLoginSuccess={() => setGameState(GameState.TITLE)}
-          onForgotPassword={() => setGameState(GameState.FORGOT_PASSWORD)}
-        />
-      )}
-
-      {gameState === GameState.FORGOT_PASSWORD && (
-        <ForgotPasswordScreen
-          onBack={() => setGameState(GameState.LOGIN)}
-        />
-      )}
-
-      {gameState === GameState.RESET_PASSWORD && (
-        <ResetPasswordScreen
-          onSuccess={() => setGameState(GameState.TITLE)}
-        />
-      )}
-
       {gameState === GameState.TITLE && (
         <TitleScreen
           onStart={handleStartClick}
           leaderboard={leaderboard}
-          onLogout={handleLogout}
           user={user}
-        />
-      )}
-
-      {gameState === GameState.REGISTRATION && (
-        <RegistrationForm
-          onSubmit={handleRegistration}
-          onBack={() => setGameState(GameState.WELCOME)}
-          onGoToLogin={() => setGameState(GameState.LOGIN)}
         />
       )}
 

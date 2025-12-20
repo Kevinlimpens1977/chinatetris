@@ -6,7 +6,6 @@ interface TitleScreenProps {
     onStart: () => void;
     leaderboard: LeaderboardEntry[];
     user: UserData | null;
-    onLogout: () => void;
 }
 
 interface ChinaContainerProps {
@@ -44,23 +43,11 @@ const ChinaContainer: React.FC<ChinaContainerProps> = ({
     );
 };
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, onLogout }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
 
     return (
         <div className="relative z-10 flex flex-col items-center w-full h-full min-h-[100dvh] overflow-y-auto overflow-x-hidden py-4 px-4 md:py-8">
-
-            {/* Top Right: Logout Button */}
-            {user && (
-                <button
-                    onClick={onLogout}
-                    className="absolute top-4 right-4 z-50 bg-black/40 hover:bg-red-900/40 backdrop-blur-md border border-white/20 text-white/80 text-[10px] md:text-xs font-bold uppercase tracking-widest px-3 py-2 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
-                    title="Logout"
-                >
-                    <span>🚪</span>
-                    <span className="hidden md:inline group-hover:text-red-200 transition-colors">Uitloggen</span>
-                </button>
-            )}
 
             {/* HEADER SECTION */}
             <div className="flex flex-col items-center justify-center mt-8 md:mt-12 w-full shrink-0 relative z-10 text-center">

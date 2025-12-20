@@ -67,7 +67,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                                 <div className="bg-yellow-900/20 flex flex-col items-center px-4 md:px-6 py-2 md:py-3 rounded-2xl border border-yellow-500/30 shadow-inner flex-1 bg-gradient-to-br from-yellow-900/10 to-red-900/10 text-center">
                                     <span className="text-yellow-500 uppercase tracking-[0.2em] text-[10px] md:text-xs font-bold mb-1">Bonus Tickets</span>
                                     <span className="text-2xl md:text-3xl font-mono font-black text-yellow-400 drop-shadow-md flex items-center justify-center gap-2">
-                                        <span className="text-xl">🎟️</span> {stats.lotteryTickets || 0}
+                                        <span className="text-xl">🎟️</span> {stats.bonusTickets || 0}
                                     </span>
                                 </div>
                             </div>
@@ -75,8 +75,8 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                             {/* Tickets Explained */}
                             <div className="mb-4 text-center">
                                 <p className="text-[10px] md:text-xs text-yellow-100/80 font-medium">
-                                    {stats.lotteryTickets > 0
-                                        ? `Goed gedaan! Je hebt ${stats.lotteryTickets} gratis bonus ticket(s) verdiend door je gameplay.`
+                                    {stats.bonusTickets > 0
+                                        ? `Goed gedaan! Je hebt ${stats.bonusTickets} gratis bonus ticket(s) verdiend door je gameplay.`
                                         : 'Behaal 5.000 punten om gratis bonus tickets te verdienen!'}
                                 </p>
                                 <p className="text-[9px] text-gray-500 mt-1 italic">
@@ -146,7 +146,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
                                 OPNIEUW SPELEN
                             </button>
                             <p className="text-center text-[10px] text-gray-500 mt-3">
-                                Elk spel vereist 1 digitale credit. Betalingen zijn geen donaties of crowdfunding. Veel plezier!
+                                Veel plezier!
                             </p>
                         </div>
                     </div>
