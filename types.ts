@@ -12,6 +12,7 @@ export interface UserData {
   name: string;
   email: string;
   city: string;
+  credits: number;
   tickets?: number;
   highscore?: number;
   ticketNames?: string[];

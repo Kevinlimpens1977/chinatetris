@@ -1,8 +1,25 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore, collection, addDoc, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
+import {
+    getFirestore,
+    Firestore,
+    collection,
+    doc,
+    getDoc,
+    setDoc,
+    addDoc,
+    getDocs,
+    query,
+    orderBy,
+    limit,
+    where,
+    runTransaction,
+    increment,
+    serverTimestamp,
+    Timestamp
+} from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 
-// Live Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD2uDvmRIe0pgMNNZlTWPUkp6PDyYEOTko",
     authDomain: "chinatetris-c5706.firebaseapp.com",
@@ -17,145 +34,295 @@ let db: Firestore | null = null;
 let auth: Auth | null = null;
 
 // Initialize Firebase
-const isFirebaseEnabled = true; // Now using live credentials
-
-if (isFirebaseEnabled) {
-    try {
-        if (!getApps().length) {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            console.log("🔥 Firebase initialized successfully.");
-        } else {
-            app = getApps()[0];
-            db = getFirestore(app);
-            auth = getAuth(app);
-        }
-    } catch (error) {
-        console.warn("⚠️ Firebase failed to initialize:", error);
+try {
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        console.log("🔥 Firebase initialized successfully.");
+    } else {
+        app = getApps()[0];
+        db = getFirestore(app);
+        auth = getAuth(app);
     }
+} catch (error) {
+    console.error("❌ Firebase failed to initialize:", error);
 }
 
-
 /**
- * Data abstraction with graceful fallback to localStorage logic
+ * Firestore Data Model:
+ * - users/{uid}: Per-user persistent state (credits, highscore)
+ * - tickets/{ticketId}: Ticket ownership (using ticketId as doc ID for uniqueness)
+ * - highscores/{autoId}: Append-only global leaderboard
  */
 export const firebaseService = {
-    isEnabled: () => isFirebaseEnabled && !!db,
+    isEnabled: () => !!db,
 
-    // Players / Highscores (Mapping china_players to 'players' collection)
-    async recordPlayer(player: { id: string; name: string; city: string; highscore: number; email: string }) {
+    /**
+     * Get current authenticated user's UID
+     * Returns null if not authenticated
+     */
+    getCurrentUid(): string | null {
+        return auth?.currentUser?.uid || null;
+    },
+
+    // ==================== USERS COLLECTION ====================
+
+    /**
+     * Ensure users/{uid} document exists with default values
+     * Creates if missing, otherwise leaves existing data intact
+     */
+    async ensureUserDocument(uid: string, email: string, displayName: string): Promise<boolean> {
         if (!db) {
-            console.log("[Firebase Mock] would record player/highscore:", player);
+            console.error("ensureUserDocument: Firestore not available");
+            return false;
+        }
+        try {
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+
+            if (!userSnap.exists()) {
+                await setDoc(userRef, {
+                    email,
+                    displayName,
+                    credits: 0,
+                    highscore: 0,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                console.log(`✅ Created user document for ${uid}`);
+            }
+            return true;
+        } catch (e) {
+            console.error("Error in ensureUserDocument:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Get user data from users/{uid}
+     */
+    async getUserData(uid: string): Promise<{
+        email: string;
+        displayName: string;
+        credits: number;
+        highscore: number;
+    } | null> {
+        if (!db) {
+            console.error("getUserData: Firestore not available");
             return null;
         }
         try {
-            const { runTransaction, doc } = await import('firebase/firestore');
-            const playerRef = doc(db, 'players', player.id);
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const data = userSnap.data();
+                return {
+                    email: data.email || '',
+                    displayName: data.displayName || 'Speler',
+                    credits: data.credits || 0,
+                    highscore: data.highscore || 0
+                };
+            }
+            return null;
+        } catch (e) {
+            console.error("Error in getUserData:", e);
+            return null;
+        }
+    },
+
+    /**
+     * Update user's highscore ONLY if new score is higher
+     * Uses transaction for atomicity
+     */
+    async updateUserHighscore(uid: string, newScore: number): Promise<boolean> {
+        if (!db) {
+            console.error("updateUserHighscore: Firestore not available");
+            return false;
+        }
+        try {
+            const userRef = doc(db, 'users', uid);
 
             await runTransaction(db, async (transaction) => {
-                const playerDoc = await transaction.get(playerRef);
-                const currentData = playerDoc.data();
-                const existingHighscore = currentData?.highscore || 0;
+                const userDoc = await transaction.get(userRef);
+                const currentHighscore = userDoc.exists() ? (userDoc.data().highscore || 0) : 0;
 
-                // Only update if it's a new player OR the new score is higher
-                if (!playerDoc.exists() || player.highscore > existingHighscore) {
-                    transaction.set(playerRef, {
-                        ...player,
-                        last_played: Timestamp.now()
-                    }, { merge: true });
-                } else {
-                    // Just update last_played even if not a new highscore
-                    transaction.update(playerRef, {
-                        last_played: Timestamp.now()
+                if (newScore > currentHighscore) {
+                    transaction.update(userRef, {
+                        highscore: newScore,
+                        updatedAt: serverTimestamp()
                     });
                 }
             });
             return true;
         } catch (e) {
-            console.error("Error recording player to Firebase:", e);
-            return null;
+            console.error("Error in updateUserHighscore:", e);
+            return false;
         }
     },
 
-    async getPlayer(userId: string) {
-        if (!db) return null;
+    /**
+     * Update user credits atomically
+     * @param delta - positive to add, negative to subtract
+     */
+    async updateUserCredits(uid: string, delta: number): Promise<boolean> {
+        if (!db) {
+            console.error("updateUserCredits: Firestore not available");
+            return false;
+        }
         try {
-            const { doc, getDoc } = await import('firebase/firestore');
-            const docSnap = await getDoc(doc(db, 'players', userId));
-            return docSnap.exists() ? docSnap.data() : null;
+            const userRef = doc(db, 'users', uid);
+
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User document does not exist");
+                }
+
+                const currentCredits = userDoc.data().credits || 0;
+                const newCredits = currentCredits + delta;
+
+                if (newCredits < 0) {
+                    throw new Error("Insufficient credits");
+                }
+
+                transaction.update(userRef, {
+                    credits: increment(delta),
+                    updatedAt: serverTimestamp()
+                });
+            });
+            return true;
         } catch (e) {
-            console.error("Error fetching player from Firebase:", e);
-            return null;
+            console.error("Error in updateUserCredits:", e);
+            return false;
         }
     },
 
-    async getTopScores(max: number = 5) {
-        if (!db) return [];
+    // ==================== TICKETS COLLECTION ====================
+
+    /**
+     * Create a ticket with ticketId as document ID (enforces uniqueness)
+     * Returns true if created, false if already exists or error
+     */
+    async createTicket(ticketId: string, uid: string): Promise<boolean> {
+        if (!db) {
+            console.error("createTicket: Firestore not available");
+            return false;
+        }
         try {
-            const q = query(
-                collection(db, 'players'), // Mapping for china_players
-                orderBy('highscore', 'desc'),
-                limit(max)
-            );
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => doc.data());
+            const ticketRef = doc(db, 'tickets', ticketId);
+            const ticketSnap = await getDoc(ticketRef);
+
+            if (ticketSnap.exists()) {
+                console.warn(`Ticket ${ticketId} already exists, skipping`);
+                return false;
+            }
+
+            await setDoc(ticketRef, {
+                uid,
+                ticketId,
+                status: 'won',
+                createdAt: serverTimestamp()
+            });
+            console.log(`🎫 Created ticket ${ticketId} for user ${uid}`);
+            return true;
         } catch (e) {
-            console.error("Error fetching scores from Firebase:", e);
+            console.error("Error in createTicket:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Get all tickets owned by a user
+     */
+    async getUserTickets(uid: string): Promise<Array<{ ticketId: string; status: string }>> {
+        if (!db) {
+            console.error("getUserTickets: Firestore not available");
             return [];
         }
-    },
-
-    // Tickets (Mapping china_issued_tickets to 'tickets' collection)
-    async addTicket(ticket: { user_id: string; email: string; ticket_name: string }) {
-        if (!db) {
-            console.log("[Firebase Mock] would add ticket:", ticket.ticket_name);
-            return null;
-        }
-        try {
-            // Using collection 'tickets' as mapping for china_issued_tickets
-            return await addDoc(collection(db, 'tickets'), {
-                ...ticket,
-                timestamp: Timestamp.now()
-            });
-        } catch (e) {
-            console.error("Error adding ticket to Firebase:", e);
-            return null;
-        }
-    },
-
-    async getUserTickets(userId: string) {
-        if (!db) return [];
         try {
             const q = query(
                 collection(db, 'tickets'),
-                where('user_id', '==', userId)
+                where('uid', '==', uid)
             );
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => doc.data());
+            return querySnapshot.docs.map(doc => ({
+                ticketId: doc.id,
+                status: doc.data().status || 'won'
+            }));
         } catch (e) {
-            console.error("Error fetching tickets from Firebase:", e);
+            console.error("Error in getUserTickets:", e);
             return [];
         }
     },
 
-    // Game Sessions (Mapping china_game_plays to 'game_sessions' collection)
-    async recordSession(session: { user_id: string; score: number; tickets_earned: number }) {
+    /**
+     * Get total ticket count in the system (for generating unique IDs)
+     */
+    async getTotalTicketCount(): Promise<number> {
         if (!db) {
-            console.log("[Firebase Mock] would record session:", session);
-            return null;
+            console.error("getTotalTicketCount: Firestore not available");
+            return 0;
         }
         try {
-            // Using collection 'game_sessions' as mapping for china_game_plays
-            return await addDoc(collection(db, 'game_sessions'), {
-                ...session,
-                timestamp: Timestamp.now()
-            });
+            const querySnapshot = await getDocs(collection(db, 'tickets'));
+            return querySnapshot.size;
         } catch (e) {
-            console.error("Error recording session to Firebase:", e);
-            return null;
+            console.error("Error in getTotalTicketCount:", e);
+            return 0;
+        }
+    },
+
+    // ==================== HIGHSCORES COLLECTION ====================
+
+    /**
+     * Add a new highscore entry (append-only)
+     */
+    async addHighscore(uid: string, displayName: string, score: number): Promise<boolean> {
+        if (!db) {
+            console.error("addHighscore: Firestore not available");
+            return false;
+        }
+        try {
+            await addDoc(collection(db, 'highscores'), {
+                uid,
+                displayName,
+                score,
+                createdAt: serverTimestamp()
+            });
+            return true;
+        } catch (e) {
+            console.error("Error in addHighscore:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Get top highscores for leaderboard
+     */
+    async getTopHighscores(max: number = 5): Promise<Array<{ displayName: string; score: number }>> {
+        if (!db) {
+            console.error("getTopHighscores: Firestore not available");
+            return [];
+        }
+        try {
+            const q = query(
+                collection(db, 'highscores'),
+                orderBy('score', 'desc'),
+                limit(max)
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                displayName: doc.data().displayName || 'Speler',
+                score: doc.data().score || 0
+            }));
+        } catch (e) {
+            console.error("Error in getTopHighscores:", e);
+            return [];
         }
     }
 };
 
 export { db, auth };
+

@@ -12,7 +12,7 @@ import LeaderboardModal from './components/LeaderboardModal';
 import GlobalFooter from './components/GlobalFooter';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { submitScore, getLeaderboard, getUserStats } from './services/backend';
+import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists } from './services/backend';
 import { onAuthStateChanged, signOut } from './services/authService';
 
 // -- Gravity Function: Professional 10-level system --
@@ -158,16 +158,24 @@ const App: React.FC = () => {
 
   // --- Firebase Auth State Listener ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged((firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         console.log("🔐 User logged in:", firebaseUser.email);
 
-        // Set user immediately with basic info (no waiting for stats)
+        // Ensure user document exists in Firestore
+        await ensureUserExists(
+          firebaseUser.uid,
+          firebaseUser.email || '',
+          firebaseUser.displayName || 'Speler'
+        );
+
+        // Set user immediately with basic info
         setUser({
           uid: firebaseUser.uid,
           name: firebaseUser.displayName || 'Speler',
           email: firebaseUser.email || '',
           city: 'Nederland',
+          credits: 0,
           tickets: 0,
           highscore: 0,
           ticketNames: []
@@ -177,27 +185,30 @@ const App: React.FC = () => {
         setGameState(GameState.TITLE);
         setIsAuthLoading(false);
 
-        // Load stats and leaderboard in background (non-blocking)
+        // Load user data and leaderboard in background (non-blocking)
         Promise.all([
-          getUserStats(firebaseUser.uid),
+          loadUserData(firebaseUser.uid),
           getLeaderboard()
-        ]).then(([stats, lb]) => {
-          if (stats) {
+        ]).then(([userData, lb]) => {
+          if (userData) {
             setUser(prev => prev ? {
               ...prev,
-              tickets: stats.tickets || 0,
-              highscore: stats.highscore || 0,
-              ticketNames: stats.ticketNames || []
+              credits: userData.credits || 0,
+              tickets: userData.tickets || 0,
+              highscore: userData.highscore || 0,
+              ticketNames: userData.ticketNames || []
             } : null);
           }
           setLeaderboard(lb);
         }).catch(err => {
-          console.warn("Background data load error:", err);
+          console.error("Background data load error:", err);
         });
 
       } else {
         console.log("🔓 No user logged in");
+        // Clear all user state on logout
         setUser(null);
+        setLeaderboard([]);
         setGameState(GameState.LOGIN);
         setIsAuthLoading(false);
       }
@@ -428,7 +439,7 @@ const App: React.FC = () => {
 
     const newScore = statsRef.current.score;
 
-    // Live Ticket Calculation for storage
+    // Calculate bonus tickets based on score
     let tickets = 0;
     if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
     else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
@@ -439,7 +450,13 @@ const App: React.FC = () => {
     // Update local stats first so UI can show it
     setStats(prev => ({ ...prev, bonusTickets: tickets }));
 
-    // Update user state for TitleScreen
+    // Only persist if user is authenticated
+    if (!user?.uid) {
+      console.warn("No authenticated user - game results not persisted");
+      return;
+    }
+
+    // Update user state optimistically for UI
     setUser(prev => {
       if (!prev) return prev;
       return {
@@ -449,27 +466,32 @@ const App: React.FC = () => {
       };
     });
 
-    // Submit to Supabase
-    await submitScore(newScore, tickets);
+    // Submit game result to Firestore
+    const result = await submitGameResult(
+      user.uid,
+      user.name || 'Speler',
+      newScore,
+      tickets
+    );
 
-    // Fetch latest user data (including new ticket IDs)
-    const latestStats = await getUserStats();
-    if (latestStats) {
-      setUser(prev => ({
-        ...prev!,
-        tickets: latestStats.tickets,
-        highscore: latestStats.highscore,
-        ticketNames: latestStats.ticketNames
-      }));
+    // Update user with issued ticket IDs
+    if (result.ticketsIssued.length > 0) {
+      setUser(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ticketNames: [...(prev.ticketNames || []), ...result.ticketsIssued]
+        };
+      });
     }
 
     // Refresh Leaderboard
     const newLeaderboard = await getLeaderboard();
     setLeaderboard(newLeaderboard);
 
-    // Check if new high (simple check against top 10)
-    const madeTop10 = newLeaderboard.some(entry => entry.highscore <= newScore); // This logic is a bit loose, but okay for visual
-    setIsNewHigh(madeTop10);
+    // Check if new high (simple check against top scores)
+    const madeTop = newLeaderboard.some(entry => entry.highscore <= newScore);
+    setIsNewHigh(madeTop);
   };
 
   const movePiece = (dir: { x: number; y: number }) => {
@@ -692,13 +714,11 @@ const App: React.FC = () => {
         backgroundRef.current.triggerDragon();
       }
     }, 60000); // Every 60 seconds (more frequent than plow)
-
     return () => clearInterval(interval);
   }, []);
 
   // --- Flow ---
   const handleStartClick = async () => {
-    // In anonymous mode, we always just start the game.
     startGame();
   };
 

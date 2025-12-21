@@ -1,40 +1,12 @@
 import { firebaseService } from './firebase';
 
-// Types for local storage data
-export interface Player {
-    id: string;
-    email: string;
-    name: string;
-    city: string;
-    highscore: number;
-    bonus_tickets: number;
-    last_played: string;
-    is_verified: boolean;
-}
+/**
+ * Backend service for ChinaTetris
+ * All operations require an authenticated Firebase user (uid)
+ * Data is persisted exclusively to Firebase Firestore
+ */
 
-// Helper to get or create a stable local player ID
-const getLocalPlayerId = (): string => {
-    let id = localStorage.getItem('chinatetris_local_id');
-    if (!id) {
-        id = `local_${Math.random().toString(36).substr(2, 9)}_${Date.now().toString(36)}`;
-        localStorage.setItem('chinatetris_local_id', id);
-    }
-    return id;
-};
-
-// Stable Anonymous Identity
-export const getAnonymousUser = () => ({
-    id: getLocalPlayerId(),
-    email: 'local_player@tetris.internal',
-    user_metadata: {
-        name: 'Speler',
-        city: 'Lokaal'
-    },
-    email_confirmed_at: new Date().toISOString()
-});
-
-export const ANONYMOUS_USER = getAnonymousUser();
-
+// Ticket ID generator - maintains existing deterministic format
 const generateTicketId = (index: number): string => {
     const batchSizeA = 900;
     if (index < batchSizeA) {
@@ -49,122 +21,173 @@ const generateTicketId = (index: number): string => {
     return `Ticket_${batchLetter}_${itemIndex}`;
 };
 
-export const getUserStats = async (userId?: string) => {
-    const effectiveUserId = userId || ANONYMOUS_USER.id;
-
-    // Primary: Firestore
-    if (firebaseService.isEnabled()) {
-        const fireTickets = await firebaseService.getUserTickets(effectiveUserId);
-        const playerRecord = await firebaseService.getPlayer(effectiveUserId) as any;
-
-        if (fireTickets.length > 0 || playerRecord) {
-            return {
-                highscore: playerRecord?.highscore || 0,
-                tickets: fireTickets.length,
-                ticketNames: fireTickets.map((t: any) => t.ticket_name)
-            };
-        }
+/**
+ * Load complete user data from Firestore
+ * Called on login to populate the app state
+ */
+export const loadUserData = async (uid: string): Promise<{
+    credits: number;
+    highscore: number;
+    tickets: number;
+    ticketNames: string[];
+} | null> => {
+    if (!firebaseService.isEnabled()) {
+        console.error("loadUserData: Firebase not available");
+        return null;
     }
 
-    // Fallback: Local Storage (Legacy)
-    const localTickets = JSON.parse(localStorage.getItem('chinatetris_issued_tickets') || '[]');
-    const userTickets = localTickets.filter((t: any) => t.user_id === effectiveUserId);
-    const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
-    const playerStats = localPlayers.find((p: any) => p.id === effectiveUserId);
+    try {
+        // Fetch user document and tickets in parallel
+        const [userData, userTickets] = await Promise.all([
+            firebaseService.getUserData(uid),
+            firebaseService.getUserTickets(uid)
+        ]);
 
-    return {
-        highscore: playerStats?.highscore || 0,
-        tickets: userTickets.length,
-        ticketNames: userTickets.map((t: any) => t.ticket_name)
-    };
-};
-
-
-export const issueTickets = async (userId: string, email: string, count: number) => {
-    if (count <= 0) return;
-
-    // 1. Determine starting index based on total existing tickets (for deterministic IDs)
-    const stats = await getUserStats();
-    const startIdx = stats.tickets;
-
-    const localTickets = JSON.parse(localStorage.getItem('chinatetris_issued_tickets') || '[]');
-
-    for (let i = 0; i < count; i++) {
-        const ticketData = {
-            user_id: userId,
-            email: email,
-            ticket_name: generateTicketId(startIdx + i),
-            created_at: new Date().toISOString()
+        return {
+            credits: userData?.credits || 0,
+            highscore: userData?.highscore || 0,
+            tickets: userTickets.length,
+            ticketNames: userTickets.map(t => t.ticketId)
         };
-
-        // 2. Local Save (Cache)
-        localTickets.push(ticketData);
-
-        // 3. Firestore Map (Collection 'tickets')
-        firebaseService.addTicket(ticketData);
-    }
-    localStorage.setItem('chinatetris_issued_tickets', JSON.stringify(localTickets));
-};
-
-export const submitScore = async (score: number, bonusTickets: number) => {
-    const user = ANONYMOUS_USER;
-    const { name, city } = user.user_metadata;
-    const displayName = name || 'Speler';
-
-    // 1. Local Update (Cache)
-    const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
-    let pIdx = localPlayers.findIndex((p: any) => p.id === user.id);
-    const oldHighscore = pIdx >= 0 ? localPlayers[pIdx].highscore : 0;
-
-    const playerData = {
-        id: user.id,
-        email: user.email,
-        name: displayName,
-        city: city || 'Lokaal',
-        highscore: Math.max(oldHighscore, score),
-        last_played: new Date().toISOString()
-    };
-
-    if (pIdx >= 0) localPlayers[pIdx] = playerData;
-    else localPlayers.push(playerData);
-    localStorage.setItem('chinatetris_players', JSON.stringify(localPlayers));
-
-    // 2. Firestore Collection Mapping
-    firebaseService.recordPlayer(playerData);
-
-    // 3. Record session
-    firebaseService.recordSession({
-        user_id: user.id,
-        score,
-        tickets_earned: bonusTickets
-    });
-
-    // 4. Issue tickets
-    if (bonusTickets > 0) {
-        await issueTickets(user.id, user.email, bonusTickets);
+    } catch (e) {
+        console.error("Error in loadUserData:", e);
+        return null;
     }
 };
 
-export const getLeaderboard = async () => {
-    // 1. Firestore Primary
-    if (firebaseService.isEnabled()) {
-        const topScores = await firebaseService.getTopScores(5);
-        if (topScores.length > 0) {
-            return topScores.map((s: any) => ({
-                name: s.name,
-                city: s.city,
-                highscore: s.highscore
-            }));
+/**
+ * Ensure user document exists (called on first login)
+ */
+export const ensureUserExists = async (
+    uid: string,
+    email: string,
+    displayName: string
+): Promise<boolean> => {
+    return firebaseService.ensureUserDocument(uid, email, displayName);
+};
+
+/**
+ * Issue tickets to a user
+ * Generates unique ticket IDs and persists to Firestore
+ */
+export const issueTickets = async (uid: string, count: number): Promise<string[]> => {
+    if (count <= 0) return [];
+
+    if (!firebaseService.isEnabled()) {
+        console.error("issueTickets: Firebase not available");
+        return [];
+    }
+
+    const issuedTickets: string[] = [];
+
+    try {
+        // Get current total ticket count for ID generation
+        const totalTickets = await firebaseService.getTotalTicketCount();
+        let ticketIndex = totalTickets;
+
+        for (let i = 0; i < count; i++) {
+            let ticketId = generateTicketId(ticketIndex);
+            let created = false;
+
+            // Keep trying until we find an unused ticket ID
+            while (!created) {
+                created = await firebaseService.createTicket(ticketId, uid);
+                if (!created) {
+                    // Ticket ID already exists, try next one
+                    ticketIndex++;
+                    ticketId = generateTicketId(ticketIndex);
+                }
+            }
+
+            issuedTickets.push(ticketId);
+            ticketIndex++;
         }
+
+        console.log(`🎫 Issued ${issuedTickets.length} tickets to ${uid}:`, issuedTickets);
+        return issuedTickets;
+    } catch (e) {
+        console.error("Error in issueTickets:", e);
+        return issuedTickets; // Return what we managed to issue
+    }
+};
+
+/**
+ * Submit game result to Firestore
+ * - Adds entry to highscores collection (append-only)
+ * - Updates user's personal highscore if this is a new best
+ * - Issues bonus tickets based on score
+ */
+export const submitGameResult = async (
+    uid: string,
+    displayName: string,
+    score: number,
+    bonusTickets: number
+): Promise<{
+    isNewHighscore: boolean;
+    ticketsIssued: string[];
+}> => {
+    if (!firebaseService.isEnabled()) {
+        console.error("submitGameResult: Firebase not available");
+        return { isNewHighscore: false, ticketsIssued: [] };
     }
 
-    // 2. Local Fallback
-    const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
-    const sorted = [...localPlayers].sort((a, b) => b.highscore - a.highscore).slice(0, 5);
+    try {
+        // 1. Add to global highscores (append-only)
+        await firebaseService.addHighscore(uid, displayName, score);
+        console.log(`📊 Added highscore entry: ${displayName} - ${score}`);
 
-    return sorted.map((entry: any) => ({
-        name: entry.name,
-        city: entry.city,
-        highscore: entry.highscore
-    }));
+        // 2. Update user's personal highscore if this is higher
+        const userData = await firebaseService.getUserData(uid);
+        const oldHighscore = userData?.highscore || 0;
+        const isNewHighscore = score > oldHighscore;
+
+        if (isNewHighscore) {
+            await firebaseService.updateUserHighscore(uid, score);
+            console.log(`🏆 New personal best for ${uid}: ${score}`);
+        }
+
+        // 3. Issue bonus tickets
+        let ticketsIssued: string[] = [];
+        if (bonusTickets > 0) {
+            ticketsIssued = await issueTickets(uid, bonusTickets);
+        }
+
+        return { isNewHighscore, ticketsIssued };
+    } catch (e) {
+        console.error("Error in submitGameResult:", e);
+        return { isNewHighscore: false, ticketsIssued: [] };
+    }
 };
+
+/**
+ * Get global leaderboard (top scores)
+ */
+export const getLeaderboard = async (): Promise<Array<{
+    name: string;
+    highscore: number;
+}>> => {
+    if (!firebaseService.isEnabled()) {
+        console.error("getLeaderboard: Firebase not available");
+        return [];
+    }
+
+    try {
+        const topScores = await firebaseService.getTopHighscores(5);
+        return topScores.map(s => ({
+            name: s.displayName,
+            highscore: s.score
+        }));
+    } catch (e) {
+        console.error("Error in getLeaderboard:", e);
+        return [];
+    }
+};
+
+/**
+ * Update user credits (atomic operation)
+ * @param delta - positive to add, negative to subtract
+ */
+export const updateCredits = async (uid: string, delta: number): Promise<boolean> => {
+    return firebaseService.updateUserCredits(uid, delta);
+};
+
