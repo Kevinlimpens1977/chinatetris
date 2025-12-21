@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { loginWithEmail, sendPasswordReset, signInWithGoogle, getAuthErrorMessage } from '../services/authService';
 
-const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/googletransp.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGV0cmFuc3AucG5nIiwiaWF0IjoxNzY2MzI5NzEyLCJleHAiOjE4Mjk0MDE3MTJ9.iobjvxFxzinLvvhoJCW8zEW5n2sj3Ct3WVSLi6s9kOM';
+const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/googletransp.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGV0cmFuc3AucG5nIiwiaWF0IjoxNzY2MzMwMTI1LCJleHAiOjE4Mjk0MDIxMjV9.VBInKjtSXzs_dfTsLgqYDet1QnQ9Udm-Z1cANj-rwqY';
 
 interface LoginScreenProps {
     onLoginSuccess: (user: any) => void;
@@ -241,7 +241,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onGoToRegiste
                                         disabled={isLoading}
                                         className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <img src={GOOGLE_ICON_URL} alt="Google" className="w-8 h-8 rounded" />
+                                        <img src={GOOGLE_ICON_URL} alt="Google" className="w-24 h-24" />
                                         <span>Inloggen met Google</span>
                                     </button>
                                 </form>
