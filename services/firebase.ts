@@ -1,38 +1,37 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, collection, addDoc, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
+import { getAuth, Auth } from 'firebase/auth';
 
-// Placeholder config - Use VITE_ prefix for Vite environment variables
+// User provided config
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "placeholder-api-key",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "placeholder-auth-domain",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "placeholder-project-id",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "placeholder-storage-bucket",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "placeholder-messaging-sender-id",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || "placeholder-app-id"
+    apiKey: "AIzaSyD2uDvmRIe0pgMNNZlTWPUkp6PDyYEOTko",
+    authDomain: "chinatetris-c5706.firebaseapp.com",
+    projectId: "chinatetris-c5706",
+    storageBucket: "chinatetris-c5706.firebasestorage.app",
+    messagingSenderId: "1092547471184",
+    appId: "1:1092547471184:web:88be6f9117568563b06e55"
 };
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let auth: Auth | null = null;
 
-// Only initialize if we have a real-looking project ID and not a placeholder
-const isFirebaseEnabled =
-    firebaseConfig.projectId &&
-    firebaseConfig.projectId !== "placeholder-project-id" &&
-    firebaseConfig.apiKey !== "placeholder-api-key";
-
-if (isFirebaseEnabled) {
-    try {
-        if (!getApps().length) {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            console.log("🔥 Firebase initialized successfully.");
-        }
-    } catch (error) {
-        console.warn("⚠️ Firebase failed to initialize:", error);
+try {
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        console.log("🔥 Firebase initialized successfully.");
+    } else {
+        app = getApps()[0];
+        db = getFirestore(app);
+        auth = getAuth(app);
     }
-} else {
-    console.log("ℹ️ Firebase is in placeholder mode (using local fallback).");
+} catch (error) {
+    console.warn("⚠️ Firebase failed to initialize:", error);
 }
+
+const isFirebaseEnabled = !!db && !!auth;
 
 /**
  * Data abstraction with graceful fallback to localStorage logic
@@ -155,4 +154,4 @@ export const firebaseService = {
     }
 };
 
-export { db };
+export { db, auth };

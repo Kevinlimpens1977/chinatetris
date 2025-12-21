@@ -8,9 +8,14 @@ import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
 import GlobalFooter from './components/GlobalFooter';
+import WelcomeScreen from './components/WelcomeScreen';
+import LoginScreen from './components/LoginScreen';
+import RegistrationForm from './components/RegistrationForm';
+import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { submitScore, getLeaderboard, getUserStats, ANONYMOUS_USER } from './services/backend';
+import { submitScore, getLeaderboard, getUserStats } from './services/backend';
+import { authService } from './services/authService';
 
 // -- Gravity Function: Professional 10-level system --
 const getGravityForLevel = (level: number): number => {
@@ -77,8 +82,9 @@ const getShapeMatrix = (type: TetrominoType, rotation: number) => {
 
 const App: React.FC = () => {
   // --- State ---
-  const [gameState, setGameState] = useState<GameState>(GameState.TITLE);
+  const [gameState, setGameState] = useState<GameState>(GameState.WELCOME);
   const [user, setUser] = useState<UserData | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
@@ -152,35 +158,55 @@ const App: React.FC = () => {
   useEffect(() => { clearingLinesRef.current = clearingLines; }, [clearingLines]);
   useEffect(() => { ghostEnabledRef.current = ghostEnabled; }, [ghostEnabled]);
 
-  // --- Consolidated Initialization Logic (Purely Anonymous) ---
+  // --- Consolidated Initialization Logic (Firebase Auth) ---
   useEffect(() => {
-    const initApp = async () => {
-      try {
-        console.log("🚀 Initializing Anonymous Session...");
+    // 1. Listen for Auth Changes
+    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+      setIsAuthChecking(true);
 
-        // 1. Fetch Leaderboard
-        const lb = await getLeaderboard();
-        setLeaderboard(lb);
+      if (firebaseUser) {
+        console.log("🔥 User Authenticated:", firebaseUser.email);
 
-        // 2. Load Anonymous User Stats
-        const stats = await getUserStats();
+        // 2. Load User Stats from Backend (Firebase Firestore)
+        try {
+          // Note: getUserStats in backend.ts needs to be updated to use the logged in user
+          // For now we pass the user ID if we refactor it, or it uses ANONYMOUS internally (needs fix)
+          const stats = await getUserStats();
 
-        setUser({
-          name: ANONYMOUS_USER.user_metadata.name,
-          city: ANONYMOUS_USER.user_metadata.city,
-          email: ANONYMOUS_USER.email,
-          tickets: stats?.tickets || 0,
-          highscore: stats?.highscore || 0,
-          ticketNames: stats?.ticketNames || []
-        });
+          setUser({
+            name: firebaseUser.displayName || 'Speler',
+            email: firebaseUser.email || '',
+            city: 'Tempel', // Default or from metadata if we had it
+            tickets: stats?.tickets || 0,
+            highscore: stats?.highscore || 0,
+            ticketNames: stats?.ticketNames || []
+          });
 
-      } catch (err) {
-        console.error("Initialization Error:", err);
+          // Transition to Title if we were in an auth state
+          if ([GameState.WELCOME, GameState.LOGIN, GameState.REGISTRATION].includes(gameStateRef.current)) {
+            setGameState(GameState.TITLE);
+          }
+        } catch (err) {
+          console.error("Error loading user stats:", err);
+        }
+      } else {
+        console.log("👤 No user logged in.");
+        setUser(null);
+        setGameState(GameState.WELCOME);
       }
-    };
 
-    initApp();
-  }, []); // Run once on mount
+      setIsAuthChecking(false);
+    });
+
+    // 2. Fetch Leaderboard (General)
+    const fetchLeaderboard = async () => {
+      const lb = await getLeaderboard();
+      setLeaderboard(lb);
+    };
+    fetchLeaderboard();
+
+    return () => unsubscribe();
+  }, []);
 
   // --- Logic ---
 
@@ -742,10 +768,44 @@ const App: React.FC = () => {
   return (
     <div className="relative w-full h-[100dvh] flex flex-col bg-transparent overflow-hidden touch-none overscroll-none select-none">
 
-      {/* Background Ambience */}
-      <ChinaBackground ref={backgroundRef} />
+      {/* Auth Checking Loading Screen */}
+      {isAuthChecking && (
+        <div className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-black backdrop-blur-md">
+          <div className="text-6xl mb-4 animate-bounce">🧧</div>
+          <div className="w-12 h-12 border-4 border-red-600 border-t-yellow-500 rounded-full animate-spin"></div>
+          <div className="mt-4 text-gray-500 uppercase tracking-[0.3em] font-bold text-[10px]">Tempel Toegang Controleren...</div>
+        </div>
+      )}
 
-      {/* Credit and Dashboard screens are removed */}
+      {/* Auth screens */}
+      {gameState === GameState.WELCOME && (
+        <WelcomeScreen
+          onGoToLogin={() => setGameState(GameState.LOGIN)}
+          onGoToRegistration={() => setGameState(GameState.REGISTRATION)}
+        />
+      )}
+
+      {gameState === GameState.LOGIN && (
+        <LoginScreen
+          onBack={() => setGameState(GameState.WELCOME)}
+          onSuccess={() => setGameState(GameState.TITLE)}
+          onGoToSignup={() => setGameState(GameState.REGISTRATION)}
+        />
+      )}
+
+      {gameState === GameState.REGISTRATION && (
+        <RegistrationForm
+          onBack={() => setGameState(GameState.WELCOME)}
+          onSuccess={() => setGameState(GameState.TITLE)}
+          onGoToLogin={() => setGameState(GameState.LOGIN)}
+        />
+      )}
+
+      {gameState === GameState.FORGOT_PASSWORD && (
+        <ForgotPasswordScreen
+          onBack={() => setGameState(GameState.LOGIN)}
+        />
+      )}
 
       {/* Close Button - Top-left on mobile, top-right on desktop */}
       {gameState === GameState.PLAYING && (

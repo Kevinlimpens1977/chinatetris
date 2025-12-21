@@ -1,4 +1,5 @@
 import { firebaseService } from './firebase';
+import { authService } from './authService';
 
 // Types for local storage data
 export interface Player {
@@ -33,7 +34,26 @@ export const getAnonymousUser = () => ({
     email_confirmed_at: new Date().toISOString()
 });
 
-export const ANONYMOUS_USER = getAnonymousUser();
+// Helper to get active user ID and metadata
+export const getActiveUser = () => {
+    const fbUser = authService.getCurrentUser();
+    if (fbUser) {
+        return {
+            id: fbUser.uid,
+            email: fbUser.email || '',
+            name: fbUser.displayName || 'Speler',
+            city: 'Tempel'
+        };
+    }
+
+    const anon = getAnonymousUser();
+    return {
+        id: anon.id,
+        email: anon.email,
+        name: anon.user_metadata.name,
+        city: anon.user_metadata.city
+    };
+};
 
 const generateTicketId = (index: number): string => {
     const batchSizeA = 900;
@@ -50,7 +70,7 @@ const generateTicketId = (index: number): string => {
 };
 
 export const getUserStats = async () => {
-    const user = ANONYMOUS_USER;
+    const user = getActiveUser();
 
     // Primary: Firestore
     if (firebaseService.isEnabled()) {
@@ -106,9 +126,8 @@ export const issueTickets = async (userId: string, email: string, count: number)
 };
 
 export const submitScore = async (score: number, bonusTickets: number) => {
-    const user = ANONYMOUS_USER;
-    const { name, city } = user.user_metadata;
-    const displayName = name || 'Speler';
+    const user = getActiveUser();
+    const displayName = user.name || 'Speler';
 
     // 1. Local Update (Cache)
     const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
@@ -119,7 +138,7 @@ export const submitScore = async (score: number, bonusTickets: number) => {
         id: user.id,
         email: user.email,
         name: displayName,
-        city: city || 'Lokaal',
+        city: user.city || 'Lokaal',
         highscore: Math.max(oldHighscore, score),
         last_played: new Date().toISOString()
     };
