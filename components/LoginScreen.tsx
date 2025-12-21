@@ -241,7 +241,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onGoToRegiste
                                         disabled={isLoading}
                                         className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <img src={GOOGLE_ICON_URL} alt="Google" className="w-5 h-5 rounded" />
+                                        <img src={GOOGLE_ICON_URL} alt="Google" className="w-8 h-8 rounded" />
                                         <span>Inloggen met Google</span>
                                     </button>
                                 </form>
