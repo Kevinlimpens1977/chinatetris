@@ -5,11 +5,12 @@ interface GameOverScreenProps {
     stats: PlayerStats;
     user: UserData;
     onRestart: () => void;
+    onStop: () => void;
     isNewHigh: boolean;
     leaderboard: LeaderboardEntry[];
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart, isNewHigh, leaderboard }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart, onStop, isNewHigh, leaderboard }) => {
 
     const displayList = useMemo(() => {
         const list = leaderboard.map(e => ({ ...e, isMe: false }));
@@ -139,12 +140,20 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ stats, user, onRestart,
 
                         {/* Footer Actions */}
                         <div className="shrink-0 p-4 md:p-8 pt-0 text-center">
-                            <button
-                                onClick={onRestart}
-                                className="w-full py-4 md:py-5 rounded-2xl bg-gradient-to-r from-red-600 to-red-800 text-white font-black text-lg md:text-xl tracking-widest hover:from-red-500 hover:to-red-700 transition-all transform hover:scale-[1.02] shadow-[0_0_30px_rgba(220,38,38,0.4)] border border-red-400/30"
-                            >
-                                OPNIEUW SPELEN
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={onStop}
+                                    className="flex-1 py-4 md:py-5 rounded-2xl bg-gradient-to-r from-gray-700 to-gray-800 text-white font-bold text-base md:text-lg tracking-widest hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-[1.02] shadow-lg border border-gray-500/30"
+                                >
+                                    STOPPEN
+                                </button>
+                                <button
+                                    onClick={onRestart}
+                                    className="flex-1 py-4 md:py-5 rounded-2xl bg-gradient-to-r from-red-600 to-red-800 text-white font-black text-base md:text-lg tracking-widest hover:from-red-500 hover:to-red-700 transition-all transform hover:scale-[1.02] shadow-[0_0_30px_rgba(220,38,38,0.4)] border border-red-400/30"
+                                >
+                                    OPNIEUW SPELEN
+                                </button>
+                            </div>
                             <p className="text-center text-[10px] text-gray-500 mt-3">
                                 Veel plezier!
                             </p>

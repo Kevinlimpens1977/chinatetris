@@ -134,8 +134,8 @@ export const submitGameResult = async (
     isNewHighscore: boolean;
     ticketsIssued: string[];
 }> => {
-    // DEBUG: Verify submitGameResult is called with correct values
-    console.log(`🎯 submitGameResult CALLED - uid: ${uid}, score: ${score}, bonusTickets: ${bonusTickets}`);
+    // [submitScore] log at very top of function
+    console.log('[submitScore] called with score=', score, 'bonusTickets=', bonusTickets);
 
     // EXPLICIT AUTH CHECK - surface auth bugs instead of silently failing
     if (!uid) {

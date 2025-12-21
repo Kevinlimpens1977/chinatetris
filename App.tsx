@@ -480,12 +480,8 @@ const App: React.FC = () => {
       };
     });
 
-    // [GAME END] Explicit logging before submitScore
-    console.log('[GAME END] Calling submitGameResult with:');
-    console.log('[GAME END]   uid =', user.uid);
-    console.log('[GAME END]   name =', user.name || 'Speler');
-    console.log('[GAME END]   finalScore =', finalScore);
-    console.log('[GAME END]   tickets =', tickets);
+    // [GAME OVER] Debug log right before submitScore
+    console.log('[GAME OVER] finalScore=', finalScore, 'bonusTickets=', tickets);
 
     // Submit game result to Firestore
     const result = await submitGameResult(
@@ -969,6 +965,7 @@ const App: React.FC = () => {
           stats={stats}
           user={user}
           onRestart={startGame}
+          onStop={() => setGameState(GameState.TITLE)}
           isNewHigh={isNewHigh}
           leaderboard={leaderboard}
         />
