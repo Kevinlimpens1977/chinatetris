@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { registerWithEmail, signInWithGoogle, getAuthErrorMessage } from '../services/authService';
 
-const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/google.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGUuanBnIiwiaWF0IjoxNzY2MzI4MTM4LCJleHAiOjE4Mjk0MDAxMzh9.8wklOj41gypeSZZduGyyTr70kRAYMVIOv6I49Npyd14';
+const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/googletransp.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGV0cmFuc3AucG5nIiwiaWF0IjoxNzY2MzI5NzEyLCJleHAiOjE4Mjk0MDE3MTJ9.iobjvxFxzinLvvhoJCW8zEW5n2sj3Ct3WVSLi6s9kOM';
 
 interface RegistrationScreenProps {
     onRegisterSuccess: (user: any) => void;
