@@ -59,20 +59,25 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onBack, onSuccess, 
         try {
             const user = await authService.signup(email, password, name, null);
 
-            // Upload photo if selected
-            if (photoFile && user) {
-                const photoUrl = await uploadPhoto(user.uid);
-                if (photoUrl) {
-                    // Update profile with photo URL
-                    const { updateProfile } = await import('firebase/auth');
-                    await updateProfile(user, { photoURL: photoUrl });
-                }
-            }
-
+            // Navigate immediately - don't wait for photo upload
             onSuccess();
+
+            // Upload photo in background (non-blocking)
+            if (photoFile && user) {
+                uploadPhoto(user.uid).then(async (photoUrl) => {
+                    if (photoUrl) {
+                        try {
+                            const { updateProfile } = await import('firebase/auth');
+                            await updateProfile(user, { photoURL: photoUrl });
+                            console.log("📸 Profile photo uploaded successfully");
+                        } catch (err) {
+                            console.error("Failed to update profile with photo:", err);
+                        }
+                    }
+                });
+            }
         } catch (err: any) {
             setError(err.message || "Er is een fout opgetreden bij het registreren.");
-        } finally {
             setLoading(false);
         }
     };

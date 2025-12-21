@@ -160,23 +160,26 @@ const App: React.FC = () => {
 
   // --- Consolidated Initialization Logic (Firebase Auth) ---
   useEffect(() => {
+    let isInitialCheck = true;
+
     // 1. Listen for Auth Changes
     const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
-      setIsAuthChecking(true);
+      // Only show loading spinner on INITIAL auth check, not on subsequent changes
+      if (isInitialCheck) {
+        setIsAuthChecking(true);
+      }
 
       if (firebaseUser) {
         console.log("🔥 User Authenticated:", firebaseUser.email);
 
         // 2. Load User Stats from Backend (Firebase Firestore)
         try {
-          // Note: getUserStats in backend.ts needs to be updated to use the logged in user
-          // For now we pass the user ID if we refactor it, or it uses ANONYMOUS internally (needs fix)
           const stats = await getUserStats();
 
           setUser({
             name: firebaseUser.displayName || 'Speler',
             email: firebaseUser.email || '',
-            city: 'Tempel', // Default or from metadata if we had it
+            city: 'Tempel',
             tickets: stats?.tickets || 0,
             highscore: stats?.highscore || 0,
             ticketNames: stats?.ticketNames || []
@@ -188,14 +191,30 @@ const App: React.FC = () => {
           }
         } catch (err) {
           console.error("Error loading user stats:", err);
+          // Still set user even if stats fail
+          setUser({
+            name: firebaseUser.displayName || 'Speler',
+            email: firebaseUser.email || '',
+            city: 'Tempel',
+            tickets: 0,
+            highscore: 0,
+            ticketNames: []
+          });
+          if ([GameState.WELCOME, GameState.LOGIN, GameState.REGISTRATION].includes(gameStateRef.current)) {
+            setGameState(GameState.TITLE);
+          }
         }
       } else {
         console.log("👤 No user logged in.");
         setUser(null);
-        setGameState(GameState.WELCOME);
+        // Only redirect to welcome on initial check, not when user logs out (handled separately)
+        if (isInitialCheck) {
+          setGameState(GameState.WELCOME);
+        }
       }
 
       setIsAuthChecking(false);
+      isInitialCheck = false;
     });
 
     // 2. Fetch Leaderboard (General)
