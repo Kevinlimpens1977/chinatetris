@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { registerWithEmail, signInWithGoogle, getAuthErrorMessage } from '../services/authService';
 
-const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/logotest.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9sb2dvdGVzdC5wbmciLCJpYXQiOjE3NjYzMzE2MDIsImV4cCI6MTgyOTQwMzYwMn0.xmmAiy5up8Kuxpqt6UkuAtiL0qHvJwK9lwwd7hy0EKY';
+const GOOGLE_ICON_URL = 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
 
 interface RegistrationScreenProps {
     onRegisterSuccess: (user: any) => void;
@@ -195,7 +195,7 @@ const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegisterSucce
                                     disabled={isLoading}
                                     className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <img src={GOOGLE_ICON_URL} alt="Google" className="w-20 h-20" />
+                                    <img src={GOOGLE_ICON_URL} alt="Google" className="w-6 h-6" />
                                     <span>Registreren met Google</span>
                                 </button>
                             </form>
