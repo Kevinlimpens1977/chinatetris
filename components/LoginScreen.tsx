@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { loginWithEmail, sendPasswordReset, signInWithGoogle, getAuthErrorMessage } from '../services/authService';
 
-const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/googletransp.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGV0cmFuc3AucG5nIiwiaWF0IjoxNzY2MzMwMTI1LCJleHAiOjE4Mjk0MDIxMjV9.VBInKjtSXzs_dfTsLgqYDet1QnQ9Udm-Z1cANj-rwqY';
+const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/googlogotrans.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbG9nb3RyYW5zLnBuZyIsImlhdCI6MTc2NjMzMTA5NCwiZXhwIjoxODYwOTM5MDk0fQ.KfJKGBe3vhqJK0vfbrHRRqhSisB1owyGrxKxlnnQLRo';
 
 interface LoginScreenProps {
     onLoginSuccess: (user: any) => void;
