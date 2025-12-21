@@ -126,6 +126,9 @@ export const submitGameResult = async (
     isNewHighscore: boolean;
     ticketsIssued: string[];
 }> => {
+    // DEBUG: Verify submitGameResult is called with correct values
+    console.log(`🎯 submitGameResult CALLED - uid: ${uid}, score: ${score}, bonusTickets: ${bonusTickets}`);
+
     if (!firebaseService.isEnabled()) {
         console.error("submitGameResult: Firebase not available");
         return { isNewHighscore: false, ticketsIssued: [] };
