@@ -81,11 +81,14 @@ const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegisterSucce
                                         type="text"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
+                                        onKeyDown={(e) => e.stopPropagation()}
                                         className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-colors"
                                         placeholder="Jan de Vries"
                                         required
+                                        autoComplete="name"
                                     />
                                 </div>
+
 
                                 {/* Email */}
                                 <div>
