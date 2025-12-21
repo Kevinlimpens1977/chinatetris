@@ -653,11 +653,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div
             ref={containerRef}
             className="
-      relative h-full w-full max-w-[90vw] md:max-w-none aspect-[16/24]
+      relative w-full h-full max-w-[90vw] md:max-w-none
+      max-h-[calc(100vh-100px)] md:max-h-[calc(100vh-60px)]
       flex items-center justify-center
       rounded-xl
       p-1
     "
+            style={{
+                aspectRatio: `${TOTAL_WIDTH_BLOCKS}/${TOTAL_HEIGHT_BLOCKS}`
+            }}
         >
             {/* Inner Content */}
             <div className="relative w-full h-full overflow-hidden rounded-lg">
