@@ -158,41 +158,54 @@ const App: React.FC = () => {
 
   // --- Firebase Auth State Listener ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
-      setIsAuthLoading(true);
-
+    const unsubscribe = onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
         console.log("🔐 User logged in:", firebaseUser.email);
 
-        // Fetch user stats from backend
-        const stats = await getUserStats(firebaseUser.uid);
-
+        // Set user immediately with basic info (no waiting for stats)
         setUser({
           uid: firebaseUser.uid,
           name: firebaseUser.displayName || 'Speler',
           email: firebaseUser.email || '',
           city: 'Nederland',
-          tickets: stats?.tickets || 0,
-          highscore: stats?.highscore || 0,
-          ticketNames: stats?.ticketNames || []
+          tickets: 0,
+          highscore: 0,
+          ticketNames: []
         });
 
-        // Fetch leaderboard
-        const lb = await getLeaderboard();
-        setLeaderboard(lb);
-
+        // Show title screen immediately
         setGameState(GameState.TITLE);
+        setIsAuthLoading(false);
+
+        // Load stats and leaderboard in background (non-blocking)
+        Promise.all([
+          getUserStats(firebaseUser.uid),
+          getLeaderboard()
+        ]).then(([stats, lb]) => {
+          if (stats) {
+            setUser(prev => prev ? {
+              ...prev,
+              tickets: stats.tickets || 0,
+              highscore: stats.highscore || 0,
+              ticketNames: stats.ticketNames || []
+            } : null);
+          }
+          setLeaderboard(lb);
+        }).catch(err => {
+          console.warn("Background data load error:", err);
+        });
+
       } else {
         console.log("🔓 No user logged in");
         setUser(null);
         setGameState(GameState.LOGIN);
+        setIsAuthLoading(false);
       }
-
-      setIsAuthLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
 
   // --- Logic ---
 
