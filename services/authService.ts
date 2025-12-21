@@ -4,6 +4,7 @@ import {
     signOut as firebaseSignOut,
     onAuthStateChanged as firebaseOnAuthStateChanged,
     updateProfile,
+    sendPasswordResetEmail,
     User
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -79,6 +80,15 @@ export const onAuthStateChanged = (callback: (user: User | null) => void) => {
     }
     return firebaseOnAuthStateChanged(auth, callback);
 };
+
+/**
+ * Send password reset email
+ */
+export const sendPasswordReset = async (email: string): Promise<void> => {
+    if (!auth) throw new Error('Firebase Auth not initialized');
+    await sendPasswordResetEmail(auth, email);
+};
+
 
 /**
  * Translate Firebase auth error codes to Dutch messages
