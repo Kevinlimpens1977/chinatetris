@@ -835,10 +835,12 @@ const App: React.FC = () => {
       {!isAuthLoading && gameState === GameState.TITLE && (
         <TitleScreen
           onStart={handleStartClick}
+          onLogout={signOut}
           leaderboard={leaderboard}
           user={user}
         />
       )}
+
 
       {gameState === GameState.LEVEL_UP && (
         <LevelUpScreen
