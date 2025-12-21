@@ -5,9 +5,15 @@ import {
     onAuthStateChanged as firebaseOnAuthStateChanged,
     updateProfile,
     sendPasswordResetEmail,
+    signInWithPopup,
+    GoogleAuthProvider,
     User
 } from 'firebase/auth';
 import { auth } from './firebase';
+
+// Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+
 
 export interface AuthError {
     code: string;
@@ -87,6 +93,15 @@ export const onAuthStateChanged = (callback: (user: User | null) => void) => {
 export const sendPasswordReset = async (email: string): Promise<void> => {
     if (!auth) throw new Error('Firebase Auth not initialized');
     await sendPasswordResetEmail(auth, email);
+};
+
+/**
+ * Sign in with Google
+ */
+export const signInWithGoogle = async (): Promise<User> => {
+    if (!auth) throw new Error('Firebase Auth not initialized');
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
 };
 
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { registerWithEmail, getAuthErrorMessage } from '../services/authService';
+import { registerWithEmail, signInWithGoogle, getAuthErrorMessage } from '../services/authService';
+
+const GOOGLE_ICON_URL = 'https://igpfvcihykgouwiulxwn.supabase.co/storage/v1/object/sign/kaschina/google.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mNzVmMzliZS03OGY3LTRkNjQtYWMxZC02NzA5MTY2ZTJiYzEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJrYXNjaGluYS9nb29nbGUuanBnIiwiaWF0IjoxNzY2MzI4MTM4LCJleHAiOjE4Mjk0MDAxMzh9.8wklOj41gypeSZZduGyyTr70kRAYMVIOv6I49Npyd14';
 
 interface RegistrationScreenProps {
     onRegisterSuccess: (user: any) => void;
@@ -44,6 +46,23 @@ const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegisterSucce
             // Show login prompt if user already exists
             if (err.code === 'auth/email-already-in-use') {
                 setShowLoginPrompt(true);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setError('');
+        setIsLoading(true);
+        try {
+            await signInWithGoogle();
+            // Auth state listener will handle the redirect
+        } catch (err: any) {
+            if (err.code === 'auth/popup-closed-by-user') {
+                // User closed popup, no error needed
+            } else {
+                setError(getAuthErrorMessage(err.code));
             }
         } finally {
             setIsLoading(false);
@@ -160,6 +179,24 @@ const RegistrationScreen: React.FC<RegistrationScreenProps> = ({ onRegisterSucce
                                     className="w-full py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] uppercase tracking-wider border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? 'Laden...' : 'Registreren'}
+                                </button>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-3 my-2">
+                                    <div className="flex-1 h-px bg-white/10"></div>
+                                    <span className="text-gray-500 text-xs uppercase tracking-wider">of</span>
+                                    <div className="flex-1 h-px bg-white/10"></div>
+                                </div>
+
+                                {/* Google Sign In */}
+                                <button
+                                    type="button"
+                                    onClick={handleGoogleSignIn}
+                                    disabled={isLoading}
+                                    className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <img src={GOOGLE_ICON_URL} alt="Google" className="w-5 h-5 rounded" />
+                                    <span>Registreren met Google</span>
                                 </button>
                             </form>
 
