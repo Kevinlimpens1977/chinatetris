@@ -467,6 +467,9 @@ const App: React.FC = () => {
       return;
     }
 
+    // [AUTH UID] Log the authenticated UID once per game end
+    console.log('[AUTH UID]', user.uid);
+
     // Update user state optimistically for UI
     setUser(prev => {
       if (!prev) return prev;
@@ -476,6 +479,13 @@ const App: React.FC = () => {
         highscore: Math.max(prev.highscore || 0, finalScore)
       };
     });
+
+    // [GAME END] Explicit logging before submitScore
+    console.log('[GAME END] Calling submitGameResult with:');
+    console.log('[GAME END]   uid =', user.uid);
+    console.log('[GAME END]   name =', user.name || 'Speler');
+    console.log('[GAME END]   finalScore =', finalScore);
+    console.log('[GAME END]   tickets =', tickets);
 
     // Submit game result to Firestore
     const result = await submitGameResult(
@@ -496,9 +506,22 @@ const App: React.FC = () => {
       });
     }
 
-    // Refresh Leaderboard
+    // Refresh Leaderboard from Firestore
     const newLeaderboard = await getLeaderboard();
     setLeaderboard(newLeaderboard);
+
+    // Refresh user data from Firestore to ensure dashboard shows Firestore truth
+    const refreshedUserData = await loadUserData(user.uid);
+    if (refreshedUserData) {
+      console.log('[Dashboard] Refreshed user data from Firestore:', refreshedUserData);
+      setUser(prev => prev ? {
+        ...prev,
+        highscore: refreshedUserData.highscore,
+        tickets: refreshedUserData.tickets,
+        ticketNames: refreshedUserData.ticketNames,
+        credits: refreshedUserData.credits
+      } : null);
+    }
 
     // Check if new high (simple check against top scores)
     const madeTop = newLeaderboard.some(entry => entry.highscore <= finalScore);

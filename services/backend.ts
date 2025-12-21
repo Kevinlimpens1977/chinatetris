@@ -143,6 +143,12 @@ export const submitGameResult = async (
         return { isNewHighscore: false, ticketsIssued: [] };
     }
 
+    // SCORE VALIDATION - temporary debug logic to surface silent failures
+    if (typeof score !== 'number' || score <= 0) {
+        console.error('[submitScore] invalid score', score);
+        throw new Error('Invalid score passed to submitScore');
+    }
+
     // TODO: REMOVE AFTER TESTING - Debug write to verify Firestore path
     try {
         const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');

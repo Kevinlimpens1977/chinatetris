@@ -193,6 +193,49 @@ export const firebaseService = {
     },
 
     /**
+     * Record player highscore - uses setDoc with merge:true
+     * Fetches existing, computes max, writes back
+     */
+    async recordPlayer(uid: string, incomingHighscore: number): Promise<boolean> {
+        console.log(`[Firestore] recordPlayer called - uid: ${uid}, incomingHighscore: ${incomingHighscore}`);
+
+        if (!db) {
+            console.error("[Firestore] recordPlayer: db not available");
+            return false;
+        }
+
+        if (!uid) {
+            console.error("[Firestore] recordPlayer: uid is null/undefined");
+            return false;
+        }
+
+        try {
+            const userRef = doc(db, 'users', uid);
+
+            // Fetch existing highscore
+            const userSnap = await getDoc(userRef);
+            const existingHighscore = userSnap.exists() ? (userSnap.data().highscore || 0) : 0;
+
+            // Compute new highscore
+            const newHighscore = Math.max(existingHighscore, incomingHighscore);
+
+            console.log(`[Firestore] existingHighscore: ${existingHighscore}, incomingHighscore: ${incomingHighscore}, newHighscore: ${newHighscore}`);
+
+            // Write using setDoc with merge:true
+            await setDoc(userRef, {
+                highscore: newHighscore,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+
+            console.log('[Firestore] highscore written', newHighscore);
+            return true;
+        } catch (e) {
+            console.error("[Firestore] recordPlayer error:", e);
+            return false;
+        }
+    },
+
+    /**
      * Update user credits atomically
      * @param delta - positive to add, negative to subtract
      */
@@ -331,6 +374,7 @@ export const firebaseService = {
                 createdAt: serverTimestamp()
             });
             console.log(`✅ addHighscore SUCCESS - Document ID: ${docRef.id}, Score: ${score}`);
+            console.log('[Firestore] highscores entry added', score);
             return true;
         } catch (e) {
             console.error("❌ Error in addHighscore:", e);
