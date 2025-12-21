@@ -134,7 +134,7 @@ export const firebaseService = {
 
     /**
      * Update user's highscore ONLY if new score is higher
-     * Uses direct updateDoc for simplicity and reliability
+     * Uses setDoc with merge:true for safe writes
      */
     async updateUserHighscoreIfHigher(uid: string, newScore: number): Promise<boolean> {
         console.log(`🔍 updateUserHighscoreIfHigher START - uid: ${uid}, newScore: ${newScore}`);
@@ -155,27 +155,24 @@ export const firebaseService = {
         }
 
         try {
-            // Step 1: Fetch current highscore from Firestore
+            // Step 1: Read current highscore from Firestore
             const userRef = doc(db, 'users', uid);
             const userSnap = await getDoc(userRef);
 
-            if (!userSnap.exists()) {
-                console.error(`❌ updateUserHighscoreIfHigher: User document ${uid} does not exist`);
-                return false;
-            }
-
-            const currentHighscore = userSnap.data().highscore || 0;
+            const currentHighscore = userSnap.exists() ? (userSnap.data().highscore || 0) : 0;
             console.log(`📊 Current highscore in Firestore: ${currentHighscore}, New score: ${newScore}`);
 
-            // Step 2: Compare and update IF higher
+            // Step 2: if newScore > existing highscore: write new highscore, else do nothing
             if (newScore > currentHighscore) {
-                console.log(`🏆 New score ${newScore} > current ${currentHighscore} - UPDATING...`);
-                const { updateDoc } = await import('firebase/firestore');
-                await updateDoc(userRef, {
+                console.log(`🏆 New score ${newScore} > current ${currentHighscore} - WRITING...`);
+
+                // Use setDoc with merge:true for safe writes
+                await setDoc(userRef, {
                     highscore: newScore,
                     updatedAt: serverTimestamp()
-                });
-                console.log(`✅ SUCCESS: Updated highscore for ${uid}: ${currentHighscore} → ${newScore}`);
+                }, { merge: true });
+
+                console.log('[Firestore] user highscore updated:', uid, newScore);
                 return true;
             } else {
                 console.log(`ℹ️ Score ${newScore} NOT higher than current ${currentHighscore}, no update needed`);
@@ -373,8 +370,8 @@ export const firebaseService = {
                 score,
                 createdAt: serverTimestamp()
             });
-            console.log(`✅ addHighscore SUCCESS - Document ID: ${docRef.id}, Score: ${score}`);
-            console.log('[Firestore] highscores entry added', score);
+            console.log(`✅ addHighscore SUCCESS - Document ID: ${docRef.id}`);
+            console.log('[Firestore] highscore added:', uid, score);
             return true;
         } catch (e) {
             console.error("❌ Error in addHighscore:", e);
@@ -394,6 +391,7 @@ export const firebaseService = {
             const q = query(
                 collection(db, 'highscores'),
                 orderBy('score', 'desc'),
+                orderBy('createdAt', 'desc'),
                 limit(max)
             );
             const querySnapshot = await getDocs(q);

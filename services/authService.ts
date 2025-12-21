@@ -14,6 +14,39 @@ import { auth } from './firebase';
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
 
+// ==================== IN-MEMORY AUTH UID STORE ====================
+// Stores the authenticated UID for the session lifetime
+// Prevents issues where auth.currentUser becomes null at game end
+let currentUid: string | null = null;
+
+/**
+ * Get the stored UID (in-memory, session-scoped)
+ * Use this instead of auth.currentUser.uid during game operations
+ */
+export const getStoredUid = (): string | null => {
+    return currentUid;
+};
+
+/**
+ * Clear the stored UID (called on logout)
+ */
+export const clearStoredUid = (): void => {
+    currentUid = null;
+    console.log('[AUTH] Cleared stored UID');
+};
+
+/**
+ * Store the UID from a successful login
+ * Called internally when auth state changes
+ */
+const storeUid = (uid: string | null): void => {
+    currentUid = uid;
+    if (uid) {
+        console.log('[AUTH] Stored UID:', uid);
+    }
+};
+// ==================== END IN-MEMORY AUTH UID STORE ====================
+
 
 export interface AuthError {
     code: string;
@@ -65,6 +98,7 @@ export const registerWithEmail = async (
  */
 export const signOut = async (): Promise<void> => {
     if (!auth) return;
+    clearStoredUid(); // Clear stored UID on logout
     await firebaseSignOut(auth);
 };
 
@@ -78,13 +112,18 @@ export const getCurrentUser = (): User | null => {
 
 /**
  * Listen for auth state changes
+ * Also stores the UID in memory for session persistence
  */
 export const onAuthStateChanged = (callback: (user: User | null) => void) => {
     if (!auth) {
         callback(null);
         return () => { };
     }
-    return firebaseOnAuthStateChanged(auth, callback);
+    return firebaseOnAuthStateChanged(auth, (user) => {
+        // Store UID in memory when user logs in
+        storeUid(user?.uid || null);
+        callback(user);
+    });
 };
 
 /**

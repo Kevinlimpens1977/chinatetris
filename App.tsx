@@ -13,7 +13,7 @@ import GlobalFooter from './components/GlobalFooter';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
 import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists } from './services/backend';
-import { onAuthStateChanged, signOut } from './services/authService';
+import { onAuthStateChanged, signOut, getStoredUid } from './services/authService';
 
 // -- Gravity Function: Professional 10-level system --
 const getGravityForLevel = (level: number): number => {
@@ -462,13 +462,15 @@ const App: React.FC = () => {
     setStats(prev => ({ ...prev, bonusTickets: tickets }));
 
     // Only persist if user is authenticated
-    if (!user?.uid) {
-      console.warn("No authenticated user - game results not persisted");
+    // Use getStoredUid() as fallback in case auth.currentUser is null at game end
+    const effectiveUid = user?.uid || getStoredUid();
+    if (!effectiveUid) {
+      console.error("[AUTH] No UID available at game end - neither user.uid nor stored UID");
       return;
     }
 
     // [AUTH UID] Log the authenticated UID once per game end
-    console.log('[AUTH UID]', user.uid);
+    console.log('[AUTH UID] effectiveUid=', effectiveUid, 'user.uid=', user?.uid, 'storedUid=', getStoredUid());
 
     // Update user state optimistically for UI
     setUser(prev => {
@@ -480,13 +482,12 @@ const App: React.FC = () => {
       };
     });
 
-    // [GAME OVER] Debug log right before submitScore
-    console.log('[GAME OVER] finalScore=', finalScore, 'bonusTickets=', tickets);
+    // [GAME OVER → submitScore] Debug log - note: submitScore will use auth.currentUser.uid internally
+    console.log('[GAME OVER → submitScore]', { finalScore, bonusTickets: tickets });
 
-    // Submit game result to Firestore
+    // Submit game result to Firestore (uid comes from auth.currentUser internally)
     const result = await submitGameResult(
-      user.uid,
-      user.name || 'Speler',
+      user?.name || 'Speler',
       finalScore,
       tickets
     );
@@ -507,7 +508,7 @@ const App: React.FC = () => {
     setLeaderboard(newLeaderboard);
 
     // Refresh user data from Firestore to ensure dashboard shows Firestore truth
-    const refreshedUserData = await loadUserData(user.uid);
+    const refreshedUserData = await loadUserData(effectiveUid);
     if (refreshedUserData) {
       console.log('[Dashboard] Refreshed user data from Firestore:', refreshedUserData);
       setUser(prev => prev ? {

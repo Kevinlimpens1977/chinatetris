@@ -1,4 +1,4 @@
-import { firebaseService } from './firebase';
+import { firebaseService, auth } from './firebase';
 
 /**
  * Backend service for ChinaTetris
@@ -126,7 +126,6 @@ export const issueTickets = async (uid: string, count: number): Promise<string[]
  * - Issues bonus tickets based on score
  */
 export const submitGameResult = async (
-    uid: string,
     displayName: string,
     score: number,
     bonusTickets: number
@@ -134,39 +133,21 @@ export const submitGameResult = async (
     isNewHighscore: boolean;
     ticketsIssued: string[];
 }> => {
-    // [submitScore] log at very top of function
-    console.log('[submitScore] called with score=', score, 'bonusTickets=', bonusTickets);
-
-    // EXPLICIT AUTH CHECK - surface auth bugs instead of silently failing
-    if (!uid) {
-        console.error("❌ submitGameResult: CALLED WITHOUT AUTH - uid is null/undefined. This is a bug!");
+    // HARD AUTH GUARD - check auth.currentUser at very start
+    if (!auth || !auth.currentUser) {
+        console.error('[submitScore] aborted: no authenticated user');
         return { isNewHighscore: false, ticketsIssued: [] };
     }
 
-    // SCORE VALIDATION - temporary debug logic to surface silent failures
+    // Use auth.currentUser.uid for ALL Firestore writes (no derived/cached UID)
+    const uid = auth.currentUser.uid;
+    console.log('[submitScore] uid=', uid);
+
+    // Validate score
     if (typeof score !== 'number' || score <= 0) {
         console.error('[submitScore] invalid score', score);
         throw new Error('Invalid score passed to submitScore');
     }
-
-    // TODO: REMOVE AFTER TESTING - Debug write to verify Firestore path
-    try {
-        const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('./firebase');
-        if (db) {
-            const testRef = doc(db, 'users', uid);
-            await updateDoc(testRef, {
-                highscore: 999,
-                updatedAt: serverTimestamp()
-            });
-            console.log("🧪 DEBUG WRITE SUCCESS: users/" + uid + ".highscore = 999");
-        } else {
-            console.error("🧪 DEBUG WRITE FAILED: db is null");
-        }
-    } catch (debugErr) {
-        console.error("🧪 DEBUG WRITE FAILED:", debugErr);
-    }
-    // END TODO: REMOVE AFTER TESTING
 
     if (!firebaseService.isEnabled()) {
         console.error("submitGameResult: Firebase not available");
