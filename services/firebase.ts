@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, collection, addDoc, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // User provided config
 const firebaseConfig = {
@@ -15,17 +16,20 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
+let storage: FirebaseStorage | null = null;
 
 try {
     if (!getApps().length) {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
+        storage = getStorage(app);
         console.log("🔥 Firebase initialized successfully.");
     } else {
         app = getApps()[0];
         db = getFirestore(app);
         auth = getAuth(app);
+        storage = getStorage(app);
     }
 } catch (error) {
     console.warn("⚠️ Firebase failed to initialize:", error);
@@ -154,4 +158,4 @@ export const firebaseService = {
     }
 };
 
-export { db, auth };
+export { db, auth, storage };

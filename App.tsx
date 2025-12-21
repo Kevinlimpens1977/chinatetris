@@ -840,6 +840,11 @@ const App: React.FC = () => {
           onStart={handleStartClick}
           leaderboard={leaderboard}
           user={user}
+          onLogout={async () => {
+            await authService.logout();
+            setUser(null);
+            setGameState(GameState.WELCOME);
+          }}
         />
       )}
 

@@ -6,6 +6,7 @@ interface TitleScreenProps {
     onStart: () => void;
     leaderboard: LeaderboardEntry[];
     user: UserData | null;
+    onLogout: () => void;
 }
 
 interface ChinaContainerProps {
@@ -43,7 +44,7 @@ const ChinaContainer: React.FC<ChinaContainerProps> = ({
     );
 };
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user, onLogout }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
 
     return (
@@ -87,9 +88,15 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, leaderboard, user })
                                     <p className="text-sm md:text-base text-yellow-100/80 mb-2">
                                         Ni hao, <span className="font-bold text-white text-lg">{user.name}</span>! 🇨🇳
                                     </p>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest">
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
                                         Klaar voor je volgende uitdaging?
                                     </p>
+                                    <button
+                                        onClick={onLogout}
+                                        className="text-[10px] text-red-400 hover:text-red-300 uppercase tracking-widest border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition-all"
+                                    >
+                                        Uitloggen
+                                    </button>
                                 </div>
                             )}
 
