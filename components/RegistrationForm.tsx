@@ -1,7 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { authService } from '../services/authService';
-import { storage } from '../services/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface RegistrationFormProps {
     onBack: () => void;
@@ -15,36 +13,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onBack, onSuccess, 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setPhotoFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const uploadPhoto = async (userId: string): Promise<string | null> => {
-        if (!photoFile || !storage) return null;
-        try {
-            const storageRef = ref(storage, `profile_photos/${userId}`);
-            await uploadBytes(storageRef, photoFile);
-            const downloadUrl = await getDownloadURL(storageRef);
-            return downloadUrl;
-        } catch (err) {
-            console.error("Photo upload failed:", err);
-            return null;
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,27 +27,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onBack, onSuccess, 
 
         setLoading(true);
         try {
-            const user = await authService.signup(email, password, name, null);
-
-            // Navigate immediately - don't wait for photo upload
+            await authService.signup(email, password, name, null);
             onSuccess();
-
-            // Upload photo in background (non-blocking)
-            if (photoFile && user) {
-                uploadPhoto(user.uid).then(async (photoUrl) => {
-                    if (photoUrl) {
-                        try {
-                            const { updateProfile } = await import('firebase/auth');
-                            await updateProfile(user, { photoURL: photoUrl });
-                            console.log("📸 Profile photo uploaded successfully");
-                        } catch (err) {
-                            console.error("Failed to update profile with photo:", err);
-                        }
-                    }
-                });
-            }
         } catch (err: any) {
             setError(err.message || "Er is een fout opgetreden bij het registreren.");
+        } finally {
             setLoading(false);
         }
     };
@@ -100,50 +54,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onBack, onSuccess, 
 
                 <form onSubmit={handleSubmit} className="space-y-4">
 
-                    {/* Photo Upload + Name Row */}
-                    <div className="flex items-center gap-4">
-                        {/* Circular Photo Upload */}
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors bg-gray-50 shrink-0 overflow-hidden"
-                        >
-                            {photoPreview ? (
-                                <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <>
-                                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                    </svg>
-                                    <span className="text-[10px] text-gray-400 mt-1">Foto</span>
-                                </>
-                            )}
-                        </div>
+                    {/* Name Field - allows spaces for first + last name */}
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </span>
                         <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handlePhotoChange}
-                            className="hidden"
+                            type="text"
+                            required
+                            className="w-full bg-gray-100 rounded-xl pl-10 pr-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all placeholder:text-gray-400"
+                            placeholder="Voor- en achternaam"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                         />
-
-                        {/* Name Field */}
-                        <div className="flex-1">
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </span>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full bg-gray-100 rounded-xl pl-10 pr-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all placeholder:text-gray-400"
-                                    placeholder="Volledige naam"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </div>
-                        </div>
                     </div>
 
                     {/* Email Field */}
