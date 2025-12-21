@@ -1,4 +1,5 @@
-import { firebaseService, auth } from './firebase';
+import { firebaseService } from './firebase';
+import { getCurrentUid } from './authService';
 
 /**
  * Backend service for ChinaTetris
@@ -126,22 +127,22 @@ export const issueTickets = async (uid: string, count: number): Promise<string[]
  * - Issues bonus tickets based on score
  */
 export const submitGameResult = async (
-    displayName: string,
     score: number,
-    bonusTickets: number
+    bonusTickets: number,
+    uid: string,
+    displayName: string
 ): Promise<{
     isNewHighscore: boolean;
     ticketsIssued: string[];
 }> => {
-    // HARD AUTH GUARD - check auth.currentUser at very start
-    if (!auth || !auth.currentUser) {
-        console.error('[submitScore] aborted: no authenticated user');
+    // Log at top of function
+    console.log('[submitScore] uid=', uid, 'score=', score);
+
+    // HARD FAIL on missing uid
+    if (!uid) {
+        console.error('[submitScore] missing uid — aborting');
         return { isNewHighscore: false, ticketsIssued: [] };
     }
-
-    // Use auth.currentUser.uid for ALL Firestore writes (no derived/cached UID)
-    const uid = auth.currentUser.uid;
-    console.log('[submitScore] uid=', uid);
 
     // Validate score
     if (typeof score !== 'number' || score <= 0) {

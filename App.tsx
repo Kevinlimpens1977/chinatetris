@@ -482,14 +482,15 @@ const App: React.FC = () => {
       };
     });
 
-    // [GAME OVER → submitScore] Debug log - note: submitScore will use auth.currentUser.uid internally
-    console.log('[GAME OVER → submitScore]', { finalScore, bonusTickets: tickets });
+    // [GAME OVER → submitScore] Pass uid explicitly from stored value
+    console.log('[GAME OVER → submitScore]', { uid: effectiveUid, finalScore, bonusTickets: tickets });
 
-    // Submit game result to Firestore (uid comes from auth.currentUser internally)
+    // Submit game result to Firestore with explicit uid parameter
     const result = await submitGameResult(
-      user?.name || 'Speler',
       finalScore,
-      tickets
+      tickets,
+      effectiveUid,
+      user?.name || 'Speler'
     );
 
     // Update user with issued ticket IDs
@@ -505,6 +506,7 @@ const App: React.FC = () => {
 
     // Refresh Leaderboard from Firestore
     const newLeaderboard = await getLeaderboard();
+    console.log('[Dashboard] Refreshed leaderboard:', newLeaderboard.length, 'entries');
     setLeaderboard(newLeaderboard);
 
     // Refresh user data from Firestore to ensure dashboard shows Firestore truth

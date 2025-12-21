@@ -27,6 +27,9 @@ export const getStoredUid = (): string | null => {
     return currentUid;
 };
 
+// Alias for getCurrentUid
+export const getCurrentUid = (): string | null => currentUid;
+
 /**
  * Clear the stored UID (called on logout)
  */
