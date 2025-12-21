@@ -1,64 +1,102 @@
-import { auth, db } from './firebase';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    User,
-    updateProfile
+    signOut as firebaseSignOut,
+    onAuthStateChanged as firebaseOnAuthStateChanged,
+    updateProfile,
+    User
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 
-export const authService = {
-    // Login with specific error message requirement
-    async login(email: string, pass: string) {
-        if (!auth) throw new Error("Auth not initialized");
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            return userCredential.user;
-        } catch (error: any) {
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                throw new Error("Verkeerd email adres of wachtwoord");
-            }
-            throw error;
-        }
-    },
+export interface AuthError {
+    code: string;
+    message: string;
+}
 
-    // Signup with specific requirements
-    async signup(email: string, pass: string, name: string, photoUrl?: string) {
-        if (!auth) throw new Error("Auth not initialized");
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+/**
+ * Login with email and password
+ * @returns User object on success, throws error on failure
+ */
+export const loginWithEmail = async (email: string, password: string): Promise<User> => {
+    if (!auth) throw new Error('Firebase Auth not initialized');
 
-            // Update profile with name and photo
-            await updateProfile(userCredential.user, {
-                displayName: name,
-                photoURL: photoUrl || null
-            });
+    try {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        return result.user;
+    } catch (error: any) {
+        // Rethrow with original code for handling in UI
+        throw error;
+    }
+};
 
-            // Note: User info is NOT saved to Firestore yet as per "don't save user info" 
-            // but we could store basic metadata if needed later.
+/**
+ * Register new user with email and password
+ * @returns User object on success, throws error on failure
+ */
+export const registerWithEmail = async (
+    email: string,
+    password: string,
+    displayName: string
+): Promise<User> => {
+    if (!auth) throw new Error('Firebase Auth not initialized');
 
-            return userCredential.user;
-        } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-                throw new Error("Gebruiker bestaat al. Log in?");
-            }
-            throw error;
-        }
-    },
+    try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
 
-    async logout() {
-        if (!auth) return;
-        await signOut(auth);
-    },
+        // Update the user's display name
+        await updateProfile(result.user, { displayName });
 
-    onAuthStateChanged(callback: (user: User | null) => void) {
-        if (!auth) return () => { };
-        return onAuthStateChanged(auth, callback);
-    },
+        return result.user;
+    } catch (error: any) {
+        // Rethrow with original code for handling in UI
+        throw error;
+    }
+};
 
-    getCurrentUser() {
-        return auth?.currentUser || null;
+/**
+ * Sign out the current user
+ */
+export const signOut = async (): Promise<void> => {
+    if (!auth) return;
+    await firebaseSignOut(auth);
+};
+
+/**
+ * Get the currently logged in user
+ */
+export const getCurrentUser = (): User | null => {
+    if (!auth) return null;
+    return auth.currentUser;
+};
+
+/**
+ * Listen for auth state changes
+ */
+export const onAuthStateChanged = (callback: (user: User | null) => void) => {
+    if (!auth) {
+        callback(null);
+        return () => { };
+    }
+    return firebaseOnAuthStateChanged(auth, callback);
+};
+
+/**
+ * Translate Firebase auth error codes to Dutch messages
+ */
+export const getAuthErrorMessage = (errorCode: string): string => {
+    switch (errorCode) {
+        case 'auth/invalid-email':
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+            return 'Verkeerd email adres of wachtwoord';
+        case 'auth/email-already-in-use':
+            return 'Gebruiker bestaat al. Log in?';
+        case 'auth/weak-password':
+            return 'Wachtwoord moet minimaal 6 karakters zijn';
+        case 'auth/too-many-requests':
+            return 'Te veel pogingen. Probeer later opnieuw.';
+        default:
+            return 'Er is een fout opgetreden. Probeer opnieuw.';
     }
 };

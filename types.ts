@@ -1,16 +1,14 @@
 export enum GameState {
-  WELCOME = 'WELCOME',
   LOGIN = 'LOGIN',
-  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
   REGISTRATION = 'REGISTRATION',
   TITLE = 'TITLE',
   PLAYING = 'PLAYING',
   LEVEL_UP = 'LEVEL_UP',
-  GAME_OVER = 'GAME_OVER',
-  RESET_PASSWORD = 'RESET_PASSWORD'
+  GAME_OVER = 'GAME_OVER'
 }
 
 export interface UserData {
+  uid: string;
   name: string;
   email: string;
   city: string;
@@ -18,6 +16,7 @@ export interface UserData {
   highscore?: number;
   ticketNames?: string[];
 }
+
 
 export interface HighScore {
   name: string;

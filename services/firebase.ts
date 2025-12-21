@@ -1,9 +1,8 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, collection, addDoc, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-// User provided config
+// Live Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD2uDvmRIe0pgMNNZlTWPUkp6PDyYEOTko",
     authDomain: "chinatetris-c5706.firebaseapp.com",
@@ -16,26 +15,27 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
-let storage: FirebaseStorage | null = null;
 
-try {
-    if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        storage = getStorage(app);
-        console.log("🔥 Firebase initialized successfully.");
-    } else {
-        app = getApps()[0];
-        db = getFirestore(app);
-        auth = getAuth(app);
-        storage = getStorage(app);
+// Initialize Firebase
+const isFirebaseEnabled = true; // Now using live credentials
+
+if (isFirebaseEnabled) {
+    try {
+        if (!getApps().length) {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            console.log("🔥 Firebase initialized successfully.");
+        } else {
+            app = getApps()[0];
+            db = getFirestore(app);
+            auth = getAuth(app);
+        }
+    } catch (error) {
+        console.warn("⚠️ Firebase failed to initialize:", error);
     }
-} catch (error) {
-    console.warn("⚠️ Firebase failed to initialize:", error);
 }
 
-const isFirebaseEnabled = !!db && !!auth;
 
 /**
  * Data abstraction with graceful fallback to localStorage logic
@@ -158,4 +158,4 @@ export const firebaseService = {
     }
 };
 
-export { db, auth, storage };
+export { db, auth };

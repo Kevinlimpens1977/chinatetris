@@ -1,5 +1,4 @@
 import { firebaseService } from './firebase';
-import { authService } from './authService';
 
 // Types for local storage data
 export interface Player {
@@ -34,26 +33,7 @@ export const getAnonymousUser = () => ({
     email_confirmed_at: new Date().toISOString()
 });
 
-// Helper to get active user ID and metadata
-export const getActiveUser = () => {
-    const fbUser = authService.getCurrentUser();
-    if (fbUser) {
-        return {
-            id: fbUser.uid,
-            email: fbUser.email || '',
-            name: fbUser.displayName || 'Speler',
-            city: 'Tempel'
-        };
-    }
-
-    const anon = getAnonymousUser();
-    return {
-        id: anon.id,
-        email: anon.email,
-        name: anon.user_metadata.name,
-        city: anon.user_metadata.city
-    };
-};
+export const ANONYMOUS_USER = getAnonymousUser();
 
 const generateTicketId = (index: number): string => {
     const batchSizeA = 900;
@@ -69,13 +49,13 @@ const generateTicketId = (index: number): string => {
     return `Ticket_${batchLetter}_${itemIndex}`;
 };
 
-export const getUserStats = async () => {
-    const user = getActiveUser();
+export const getUserStats = async (userId?: string) => {
+    const effectiveUserId = userId || ANONYMOUS_USER.id;
 
     // Primary: Firestore
     if (firebaseService.isEnabled()) {
-        const fireTickets = await firebaseService.getUserTickets(user.id);
-        const playerRecord = await firebaseService.getPlayer(user.id) as any;
+        const fireTickets = await firebaseService.getUserTickets(effectiveUserId);
+        const playerRecord = await firebaseService.getPlayer(effectiveUserId) as any;
 
         if (fireTickets.length > 0 || playerRecord) {
             return {
@@ -88,9 +68,9 @@ export const getUserStats = async () => {
 
     // Fallback: Local Storage (Legacy)
     const localTickets = JSON.parse(localStorage.getItem('chinatetris_issued_tickets') || '[]');
-    const userTickets = localTickets.filter((t: any) => t.user_id === user.id);
+    const userTickets = localTickets.filter((t: any) => t.user_id === effectiveUserId);
     const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
-    const playerStats = localPlayers.find((p: any) => p.id === user.id);
+    const playerStats = localPlayers.find((p: any) => p.id === effectiveUserId);
 
     return {
         highscore: playerStats?.highscore || 0,
@@ -98,6 +78,7 @@ export const getUserStats = async () => {
         ticketNames: userTickets.map((t: any) => t.ticket_name)
     };
 };
+
 
 export const issueTickets = async (userId: string, email: string, count: number) => {
     if (count <= 0) return;
@@ -126,8 +107,9 @@ export const issueTickets = async (userId: string, email: string, count: number)
 };
 
 export const submitScore = async (score: number, bonusTickets: number) => {
-    const user = getActiveUser();
-    const displayName = user.name || 'Speler';
+    const user = ANONYMOUS_USER;
+    const { name, city } = user.user_metadata;
+    const displayName = name || 'Speler';
 
     // 1. Local Update (Cache)
     const localPlayers = JSON.parse(localStorage.getItem('chinatetris_players') || '[]');
@@ -138,7 +120,7 @@ export const submitScore = async (score: number, bonusTickets: number) => {
         id: user.id,
         email: user.email,
         name: displayName,
-        city: user.city || 'Lokaal',
+        city: city || 'Lokaal',
         highscore: Math.max(oldHighscore, score),
         last_played: new Date().toISOString()
     };
