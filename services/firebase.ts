@@ -137,37 +137,52 @@ export const firebaseService = {
      * Uses direct updateDoc for simplicity and reliability
      */
     async updateUserHighscoreIfHigher(uid: string, newScore: number): Promise<boolean> {
+        console.log(`🔍 updateUserHighscoreIfHigher START - uid: ${uid}, newScore: ${newScore}`);
+
         if (!db) {
-            console.error("updateUserHighscoreIfHigher: Firestore not available");
+            console.error("❌ updateUserHighscoreIfHigher: Firestore not available");
             return false;
         }
+
+        if (!uid) {
+            console.error("❌ updateUserHighscoreIfHigher: uid is null/undefined");
+            return false;
+        }
+
+        if (typeof newScore !== 'number' || isNaN(newScore)) {
+            console.error(`❌ updateUserHighscoreIfHigher: invalid score value: ${newScore}`);
+            return false;
+        }
+
         try {
-            // First get current highscore
+            // Step 1: Fetch current highscore from Firestore
             const userRef = doc(db, 'users', uid);
             const userSnap = await getDoc(userRef);
 
             if (!userSnap.exists()) {
-                console.error(`updateUserHighscoreIfHigher: User document ${uid} does not exist`);
+                console.error(`❌ updateUserHighscoreIfHigher: User document ${uid} does not exist`);
                 return false;
             }
 
             const currentHighscore = userSnap.data().highscore || 0;
+            console.log(`📊 Current highscore in Firestore: ${currentHighscore}, New score: ${newScore}`);
 
-            // Only update if new score is strictly higher
+            // Step 2: Compare and update IF higher
             if (newScore > currentHighscore) {
+                console.log(`🏆 New score ${newScore} > current ${currentHighscore} - UPDATING...`);
                 const { updateDoc } = await import('firebase/firestore');
                 await updateDoc(userRef, {
                     highscore: newScore,
                     updatedAt: serverTimestamp()
                 });
-                console.log(`✅ Updated highscore for ${uid}: ${currentHighscore} → ${newScore}`);
+                console.log(`✅ SUCCESS: Updated highscore for ${uid}: ${currentHighscore} → ${newScore}`);
                 return true;
             } else {
-                console.log(`ℹ️ Score ${newScore} not higher than current ${currentHighscore}, no update needed`);
+                console.log(`ℹ️ Score ${newScore} NOT higher than current ${currentHighscore}, no update needed`);
                 return false;
             }
         } catch (e) {
-            console.error("Error in updateUserHighscoreIfHigher:", e);
+            console.error("❌ Error in updateUserHighscoreIfHigher:", e);
             return false;
         }
     },
@@ -293,22 +308,32 @@ export const firebaseService = {
 
     /**
      * Add a new highscore entry (append-only)
+     * This ALWAYS runs on every game end - not just personal bests
      */
     async addHighscore(uid: string, displayName: string, score: number): Promise<boolean> {
+        console.log(`📝 addHighscore CALLED - uid: ${uid}, displayName: ${displayName}, score: ${score}`);
+
         if (!db) {
-            console.error("addHighscore: Firestore not available");
+            console.error("❌ addHighscore: Firestore not available");
             return false;
         }
+
+        if (!uid || !displayName || typeof score !== 'number') {
+            console.error(`❌ addHighscore: Invalid parameters - uid: ${uid}, displayName: ${displayName}, score: ${score}`);
+            return false;
+        }
+
         try {
-            await addDoc(collection(db, 'highscores'), {
+            const docRef = await addDoc(collection(db, 'highscores'), {
                 uid,
                 displayName,
                 score,
                 createdAt: serverTimestamp()
             });
+            console.log(`✅ addHighscore SUCCESS - Document ID: ${docRef.id}, Score: ${score}`);
             return true;
         } catch (e) {
-            console.error("Error in addHighscore:", e);
+            console.error("❌ Error in addHighscore:", e);
             return false;
         }
     },

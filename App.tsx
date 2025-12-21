@@ -433,19 +433,30 @@ const App: React.FC = () => {
   };
 
   const handleGameOver = async () => {
+    // IMMEDIATELY capture final score before ANY state changes
+    const finalScore = statsRef.current.score;
+
+    // DEBUG: Log captured score at the very start
+    console.log(`🎮 handleGameOver - Captured final score: ${finalScore}`);
+
     setGameState(GameState.GAME_OVER);
     setIsPaused(false);
     setClearingLines([]);
 
-    const newScore = statsRef.current.score;
+    // Safety: If score is 0, this was likely an immediate collision on game start
+    // Don't persist a 0-score game
+    if (finalScore === 0) {
+      console.warn("⚠️ Score is 0 - skipping persistence (likely immediate collision)");
+      return;
+    }
 
-    // Calculate bonus tickets based on score
+    // Calculate bonus tickets based on captured score
     let tickets = 0;
-    if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
-    else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
-    else if (newScore >= BONUS_TICKET_THRESHOLDS.TIER_1) tickets = 1;
+    if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_1) tickets = 1;
 
-    console.log(`🎮 Game Over! Score: ${newScore}, Bonus Tickets Earned: ${tickets}`);
+    console.log(`🎮 Game Over! Score: ${finalScore}, Bonus Tickets Earned: ${tickets}`);
 
     // Update local stats first so UI can show it
     setStats(prev => ({ ...prev, bonusTickets: tickets }));
@@ -462,7 +473,7 @@ const App: React.FC = () => {
       return {
         ...prev,
         tickets: (prev.tickets || 0) + tickets,
-        highscore: Math.max(prev.highscore || 0, newScore)
+        highscore: Math.max(prev.highscore || 0, finalScore)
       };
     });
 
@@ -470,7 +481,7 @@ const App: React.FC = () => {
     const result = await submitGameResult(
       user.uid,
       user.name || 'Speler',
-      newScore,
+      finalScore,
       tickets
     );
 
@@ -490,7 +501,7 @@ const App: React.FC = () => {
     setLeaderboard(newLeaderboard);
 
     // Check if new high (simple check against top scores)
-    const madeTop = newLeaderboard.some(entry => entry.highscore <= newScore);
+    const madeTop = newLeaderboard.some(entry => entry.highscore <= finalScore);
     setIsNewHigh(madeTop);
   };
 

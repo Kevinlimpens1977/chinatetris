@@ -23,7 +23,10 @@ const generateTicketId = (index: number): string => {
 
 /**
  * Load complete user data from Firestore
- * Called on login to populate the app state
+ * DATA SOURCES:
+ * - Personal highscore: users/{uid}.highscore
+ * - Credits: users/{uid}.credits
+ * - Tickets: tickets collection where uid == uid
  */
 export const loadUserData = async (uid: string): Promise<{
     credits: number;
@@ -31,24 +34,29 @@ export const loadUserData = async (uid: string): Promise<{
     tickets: number;
     ticketNames: string[];
 } | null> => {
+    console.log(`📥 loadUserData - Fetching from users/${uid} and tickets collection`);
+
     if (!firebaseService.isEnabled()) {
         console.error("loadUserData: Firebase not available");
         return null;
     }
 
     try {
-        // Fetch user document and tickets in parallel
+        // Fetch from Firestore: users/{uid} + tickets where uid matches
         const [userData, userTickets] = await Promise.all([
             firebaseService.getUserData(uid),
             firebaseService.getUserTickets(uid)
         ]);
 
-        return {
+        const result = {
             credits: userData?.credits || 0,
             highscore: userData?.highscore || 0,
             tickets: userTickets.length,
             ticketNames: userTickets.map(t => t.ticketId)
         };
+
+        console.log(`✅ loadUserData SUCCESS - highscore: ${result.highscore}, credits: ${result.credits}, tickets: ${result.tickets}`);
+        return result;
     } catch (e) {
         console.error("Error in loadUserData:", e);
         return null;
@@ -129,6 +137,31 @@ export const submitGameResult = async (
     // DEBUG: Verify submitGameResult is called with correct values
     console.log(`🎯 submitGameResult CALLED - uid: ${uid}, score: ${score}, bonusTickets: ${bonusTickets}`);
 
+    // EXPLICIT AUTH CHECK - surface auth bugs instead of silently failing
+    if (!uid) {
+        console.error("❌ submitGameResult: CALLED WITHOUT AUTH - uid is null/undefined. This is a bug!");
+        return { isNewHighscore: false, ticketsIssued: [] };
+    }
+
+    // TODO: REMOVE AFTER TESTING - Debug write to verify Firestore path
+    try {
+        const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+        const { db } = await import('./firebase');
+        if (db) {
+            const testRef = doc(db, 'users', uid);
+            await updateDoc(testRef, {
+                highscore: 999,
+                updatedAt: serverTimestamp()
+            });
+            console.log("🧪 DEBUG WRITE SUCCESS: users/" + uid + ".highscore = 999");
+        } else {
+            console.error("🧪 DEBUG WRITE FAILED: db is null");
+        }
+    } catch (debugErr) {
+        console.error("🧪 DEBUG WRITE FAILED:", debugErr);
+    }
+    // END TODO: REMOVE AFTER TESTING
+
     if (!firebaseService.isEnabled()) {
         console.error("submitGameResult: Firebase not available");
         return { isNewHighscore: false, ticketsIssued: [] };
@@ -162,11 +195,14 @@ export const submitGameResult = async (
 
 /**
  * Get global leaderboard (top scores)
+ * DATA SOURCE: highscores collection ordered by score desc, limit 5
  */
 export const getLeaderboard = async (): Promise<Array<{
     name: string;
     highscore: number;
 }>> => {
+    console.log(`📥 getLeaderboard - Fetching top 5 from highscores collection`);
+
     if (!firebaseService.isEnabled()) {
         console.error("getLeaderboard: Firebase not available");
         return [];
@@ -174,10 +210,13 @@ export const getLeaderboard = async (): Promise<Array<{
 
     try {
         const topScores = await firebaseService.getTopHighscores(5);
-        return topScores.map(s => ({
+        const result = topScores.map(s => ({
             name: s.displayName,
             highscore: s.score
         }));
+
+        console.log(`✅ getLeaderboard SUCCESS - ${result.length} entries:`, result.map(r => `${r.name}: ${r.highscore}`));
+        return result;
     } catch (e) {
         console.error("Error in getLeaderboard:", e);
         return [];
