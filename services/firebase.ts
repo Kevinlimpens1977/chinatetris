@@ -134,32 +134,47 @@ export const firebaseService = {
 
     /**
      * Update user's highscore ONLY if new score is higher
-     * Uses transaction for atomicity
+     * Uses direct updateDoc for simplicity and reliability
      */
-    async updateUserHighscore(uid: string, newScore: number): Promise<boolean> {
+    async updateUserHighscoreIfHigher(uid: string, newScore: number): Promise<boolean> {
         if (!db) {
-            console.error("updateUserHighscore: Firestore not available");
+            console.error("updateUserHighscoreIfHigher: Firestore not available");
             return false;
         }
         try {
+            // First get current highscore
             const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
 
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userRef);
-                const currentHighscore = userDoc.exists() ? (userDoc.data().highscore || 0) : 0;
+            if (!userSnap.exists()) {
+                console.error(`updateUserHighscoreIfHigher: User document ${uid} does not exist`);
+                return false;
+            }
 
-                if (newScore > currentHighscore) {
-                    transaction.update(userRef, {
-                        highscore: newScore,
-                        updatedAt: serverTimestamp()
-                    });
-                }
-            });
-            return true;
+            const currentHighscore = userSnap.data().highscore || 0;
+
+            // Only update if new score is strictly higher
+            if (newScore > currentHighscore) {
+                const { updateDoc } = await import('firebase/firestore');
+                await updateDoc(userRef, {
+                    highscore: newScore,
+                    updatedAt: serverTimestamp()
+                });
+                console.log(`✅ Updated highscore for ${uid}: ${currentHighscore} → ${newScore}`);
+                return true;
+            } else {
+                console.log(`ℹ️ Score ${newScore} not higher than current ${currentHighscore}, no update needed`);
+                return false;
+            }
         } catch (e) {
-            console.error("Error in updateUserHighscore:", e);
+            console.error("Error in updateUserHighscoreIfHigher:", e);
             return false;
         }
+    },
+
+    // Alias for backward compatibility
+    async updateUserHighscore(uid: string, newScore: number): Promise<boolean> {
+        return this.updateUserHighscoreIfHigher(uid, newScore);
     },
 
     /**

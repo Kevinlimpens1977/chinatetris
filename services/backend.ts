@@ -132,19 +132,17 @@ export const submitGameResult = async (
     }
 
     try {
-        // 1. Add to global highscores (append-only)
-        await firebaseService.addHighscore(uid, displayName, score);
-        console.log(`📊 Added highscore entry: ${displayName} - ${score}`);
-
-        // 2. Update user's personal highscore if this is higher
-        const userData = await firebaseService.getUserData(uid);
-        const oldHighscore = userData?.highscore || 0;
-        const isNewHighscore = score > oldHighscore;
-
-        if (isNewHighscore) {
-            await firebaseService.updateUserHighscore(uid, score);
-            console.log(`🏆 New personal best for ${uid}: ${score}`);
+        // 1. ALWAYS add to global highscores (append-only)
+        const highscoreAdded = await firebaseService.addHighscore(uid, displayName, score);
+        if (!highscoreAdded) {
+            console.error("Failed to add highscore entry");
+        } else {
+            console.log(`📊 Added highscore entry: ${displayName} - ${score}`);
         }
+
+        // 2. Update user's personal highscore IF this is higher
+        // The function handles comparison internally
+        const isNewHighscore = await firebaseService.updateUserHighscoreIfHigher(uid, score);
 
         // 3. Issue bonus tickets
         let ticketsIssued: string[] = [];
