@@ -2,29 +2,68 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 // Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2024-12-18.acacia',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    console.log('🛒 Create-checkout endpoint called');
+    console.log('Method:', req.method);
+    console.log('Host:', req.headers.host);
+    console.log('Content-Type:', req.headers['content-type']);
+
     // Only allow POST
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // Check Stripe secret key
+    if (!process.env.STRIPE_SECRET_KEY) {
+        console.error('❌ STRIPE_SECRET_KEY not configured');
+        return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
     try {
-        const { uid, packageId, tokens, priceEuroCents, label } = req.body;
+        // Log raw body for debugging
+        console.log('📦 Request body:', JSON.stringify(req.body));
+
+        const { uid, packageId, tokens, priceEuroCents, label } = req.body || {};
+
+        console.log('📋 Parsed fields:', { uid, packageId, tokens, priceEuroCents, label });
 
         // Validate required fields
-        if (!uid || !packageId || !tokens || !priceEuroCents) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        if (!uid) {
+            console.error('❌ Missing uid');
+            return res.status(400).json({ error: 'Missing required field: uid' });
+        }
+        if (!packageId) {
+            console.error('❌ Missing packageId');
+            return res.status(400).json({ error: 'Missing required field: packageId' });
+        }
+        if (!tokens) {
+            console.error('❌ Missing tokens');
+            return res.status(400).json({ error: 'Missing required field: tokens' });
+        }
+        if (!priceEuroCents) {
+            console.error('❌ Missing priceEuroCents');
+            return res.status(400).json({ error: 'Missing required field: priceEuroCents' });
         }
 
-        // Get the site URL from environment or request origin
-        const siteUrl = process.env.VITE_SITE_URL ||
-            `https://${req.headers.host}` ||
-            'http://localhost:5173';
+        // Get the site URL from request origin or environment
+        // Priority: request host > environment > fallback
+        const host = req.headers.host || '';
+        let siteUrl: string;
+
+        if (host.includes('chinareis.nl')) {
+            siteUrl = 'https://www.chinareis.nl';
+        } else if (host.includes('chinatetris.vercel.app')) {
+            siteUrl = 'https://chinatetris.vercel.app';
+        } else if (process.env.VITE_SITE_URL) {
+            siteUrl = process.env.VITE_SITE_URL;
+        } else {
+            siteUrl = `https://${host}`;
+        }
+
+        console.log('🌐 Using site URL:', siteUrl);
 
         // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -34,11 +73,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     price_data: {
                         currency: 'eur',
                         product_data: {
-                            name: `ChinaTetris ${label}`,
+                            name: `ChinaTetris ${label || packageId}`,
                             description: `${tokens} speeltoken(s) voor ChinaTetris`,
-                            images: ['https://chinatetris.vercel.app/dragon-icon.png'],
                         },
-                        unit_amount: priceEuroCents,
+                        unit_amount: Number(priceEuroCents),
                     },
                     quantity: 1,
                 },
@@ -47,20 +85,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             success_url: `${siteUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${siteUrl}?payment=cancelled`,
             metadata: {
-                uid,
-                packageId,
-                tokens: tokens.toString(),
+                uid: String(uid),
+                packageId: String(packageId),
+                tokens: String(tokens),
             },
         });
 
         console.log(`✅ Created checkout session ${session.id} for user ${uid}`);
+        console.log('📍 Checkout URL:', session.url);
 
         return res.status(200).json({
             sessionId: session.id,
             url: session.url,
         });
     } catch (error: any) {
-        console.error('Error creating checkout session:', error);
+        console.error('❌ Error creating checkout session:', error.message);
+        console.error('Stack:', error.stack);
         return res.status(500).json({
             error: 'Failed to create checkout session',
             details: error.message
