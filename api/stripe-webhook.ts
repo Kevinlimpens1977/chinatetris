@@ -151,6 +151,102 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 });
 
                 console.log(`✅ Transaction recorded for session ${session.id}`);
+
+                // === PHASE 4: DRAGON CHEST TRACKING ===
+                const amountEuros = Math.floor((session.amount_total || 0) / 100);
+                const customerEmail = session.customer_details?.email || null;
+
+                if (amountEuros > 0) {
+                    // Step 3: Update dragon chest totals
+                    console.log(`🐉 Updating Dragon Chest: +${amountEuros} coins, +${tokens} credits`);
+                    const dragonChestRef = db.collection('system').doc('dragonChest');
+                    await dragonChestRef.set({
+                        totalGoldenCoins: FieldValue.increment(amountEuros),
+                        totalCredits: FieldValue.increment(tokens),
+                        lastUpdated: FieldValue.serverTimestamp()
+                    }, { merge: true });
+
+                    // Step 4: Register contributor
+                    console.log(`📝 Registering contributor: ${uid} (${customerEmail})`);
+                    const contributorRef = db.collection('contributors').doc(uid);
+                    const contributorSnapshot = await contributorRef.get();
+
+                    if (!contributorSnapshot.exists) {
+                        // First contribution: initialize with reward500Claimed = false
+                        await contributorRef.set({
+                            uid,
+                            email: customerEmail,
+                            totalContributed: amountEuros,
+                            lastContribution: FieldValue.serverTimestamp(),
+                            reward500Claimed: false
+                        });
+                    } else {
+                        // Subsequent contribution: only increment, preserve reward500Claimed
+                        await contributorRef.set({
+                            totalContributed: FieldValue.increment(amountEuros),
+                            lastContribution: FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    }
+
+                    // Step 5: Check milestone
+                    const chestDoc = await dragonChestRef.get();
+                    const chestData = chestDoc.data() || {};
+                    const totalCoins = chestData.totalGoldenCoins || 0;
+                    const milestoneReached = chestData.milestones?.['500']?.reached === true;
+
+                    console.log(`🎯 Milestone check: ${totalCoins} coins, reached: ${milestoneReached}`);
+
+                    if (totalCoins >= 500 && !milestoneReached) {
+                        console.log('🎉 500-coin milestone reached! Starting reward distribution...');
+
+                        // Step 5a: Mark milestone as reached FIRST (idempotency lock)
+                        await dragonChestRef.set({
+                            milestones: {
+                                '500': {
+                                    reached: true,
+                                    reachedAt: FieldValue.serverTimestamp(),
+                                    rewardsDistributed: false
+                                }
+                            }
+                        }, { merge: true });
+
+                        // Step 5b: Distribute rewards to all contributors
+                        const contributorsSnapshot = await db.collection('contributors').get();
+                        let rewardsCount = 0;
+
+                        for (const doc of contributorsSnapshot.docs) {
+                            const contributorUid = doc.id;
+                            const contributorData = doc.data();
+
+                            if (contributorData.reward500Claimed !== true) {
+                                // Add 1 credit to contributor
+                                await db.collection('users').doc(contributorUid).set({
+                                    credits: FieldValue.increment(1),
+                                    updatedAt: FieldValue.serverTimestamp()
+                                }, { merge: true });
+
+                                // Mark as claimed
+                                await db.collection('contributors').doc(contributorUid).set({
+                                    reward500Claimed: true
+                                }, { merge: true });
+
+                                rewardsCount++;
+                                console.log(`🎁 Rewarded +1 credit to ${contributorUid}`);
+                            }
+                        }
+
+                        // Step 5c: Mark distribution complete
+                        await dragonChestRef.set({
+                            milestones: {
+                                '500': {
+                                    rewardsDistributed: true
+                                }
+                            }
+                        }, { merge: true });
+
+                        console.log(`✅ Milestone 500 complete: ${rewardsCount} contributors rewarded`);
+                    }
+                }
             } catch (error: any) {
                 console.error('❌ Error processing payment:', error.message);
                 console.error('Stack:', error.stack);
