@@ -129,8 +129,7 @@ export const issueTickets = async (uid: string, count: number): Promise<string[]
 export const submitGameResult = async (
     score: number,
     bonusTickets: number,
-    uid: string,
-    displayName: string
+    uid: string
 ): Promise<{
     isNewHighscore: boolean;
     ticketsIssued: string[];
@@ -143,6 +142,26 @@ export const submitGameResult = async (
         console.error('[submitScore] missing uid — aborting');
         return { isNewHighscore: false, ticketsIssued: [] };
     }
+
+    // Get displayName from authenticated user - NEVER use defaults
+    const { auth } = await import('./firebase');
+    let displayName: string | null = null;
+
+    if (auth?.currentUser) {
+        if (auth.currentUser.displayName) {
+            displayName = auth.currentUser.displayName;
+        } else if (auth.currentUser.email) {
+            // Use part before @ as fallback
+            displayName = auth.currentUser.email.split('@')[0];
+        }
+    }
+
+    // HARD FAIL if no real displayName
+    if (!displayName) {
+        console.error('[submitScore] missing displayName — cannot write to highscores');
+        return { isNewHighscore: false, ticketsIssued: [] };
+    }
+    console.log('[submitScore] displayName=', displayName);
 
     // Validate score
     if (typeof score !== 'number' || score <= 0) {
@@ -219,3 +238,78 @@ export const updateCredits = async (uid: string, delta: number): Promise<boolean
     return firebaseService.updateUserCredits(uid, delta);
 };
 
+/**
+ * ONE-TIME MIGRATION: Backfill displayNames for old highscores
+ * For highscores where displayName === "Speler", fetch from auth or users collection
+ * Run only in dev mode
+ */
+export const backfillHighscoreDisplayNames = async (): Promise<void> => {
+    if (process.env.NODE_ENV !== 'development') {
+        console.log('[Migration] Skipping - not in development mode');
+        return;
+    }
+
+    console.log('[Migration] Starting highscore displayName backfill...');
+
+    try {
+        const { db, auth } = await import('./firebase');
+        const { collection, query, where, getDocs, updateDoc, doc, getDoc } = await import('firebase/firestore');
+
+        if (!db) {
+            console.error('[Migration] Firestore not available');
+            return;
+        }
+
+        // Find all highscores with displayName === "Speler"
+        const q = query(
+            collection(db, 'highscores'),
+            where('displayName', '==', 'Speler')
+        );
+
+        const snapshot = await getDocs(q);
+        console.log(`[Migration] Found ${snapshot.size} highscores with displayName "Speler"`);
+
+        let updated = 0;
+        let skipped = 0;
+
+        for (const docSnapshot of snapshot.docs) {
+            const data = docSnapshot.data();
+            const uid = data.uid;
+
+            if (!uid) {
+                console.log(`[Migration] Skipping doc ${docSnapshot.id} - no uid`);
+                skipped++;
+                continue;
+            }
+
+            // Try to get displayName from users collection
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+
+            let newDisplayName: string | null = null;
+
+            if (userSnap.exists() && userSnap.data().displayName) {
+                newDisplayName = userSnap.data().displayName;
+            } else if (auth?.currentUser?.uid === uid) {
+                // Fallback to current auth user
+                newDisplayName = auth.currentUser.displayName ||
+                    (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : null);
+            }
+
+            if (newDisplayName && newDisplayName !== 'Speler') {
+                await updateDoc(doc(db, 'highscores', docSnapshot.id), {
+                    displayName: newDisplayName
+                });
+                console.log(`[Migration] Updated ${docSnapshot.id}: "Speler" → "${newDisplayName}"`);
+                updated++;
+            } else {
+                console.log(`[Migration] Could not find displayName for uid ${uid}`);
+                skipped++;
+            }
+        }
+
+        console.log(`[Migration] Complete. Updated: ${updated}, Skipped: ${skipped}`);
+    } catch (e) {
+        console.error('[Migration] Error:', e);
+    }
+};

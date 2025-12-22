@@ -485,12 +485,11 @@ const App: React.FC = () => {
     // [GAME OVER → submitScore] Pass uid explicitly from stored value
     console.log('[GAME OVER → submitScore]', { uid: effectiveUid, finalScore, bonusTickets: tickets });
 
-    // Submit game result to Firestore with explicit uid parameter
+    // Submit game result to Firestore (displayName derived from auth internally)
     const result = await submitGameResult(
       finalScore,
       tickets,
-      effectiveUid,
-      user?.name || 'Speler'
+      effectiveUid
     );
 
     // Update user with issued ticket IDs

@@ -396,7 +396,8 @@ export const firebaseService = {
             );
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map(doc => ({
-                displayName: doc.data().displayName || 'Speler',
+                // Return exact displayName from document - no fallback substitution
+                displayName: doc.data().displayName,
                 score: doc.data().score || 0
             }));
         } catch (e) {
