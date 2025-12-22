@@ -65,9 +65,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('🌐 Using site URL:', siteUrl);
 
-        // Create Stripe Checkout Session
+        // Create Stripe Checkout Session with automatic payment methods
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card', 'ideal'],
+            // iDEAL first (priority), then card as backup
+            payment_method_types: ['ideal', 'card'],
             line_items: [
                 {
                     price_data: {
@@ -82,6 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 },
             ],
             mode: 'payment',
+            // Disable billing address and phone collection for simpler checkout
+            billing_address_collection: 'auto',
+            phone_number_collection: { enabled: false },
             success_url: `${siteUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${siteUrl}?payment=cancelled`,
             metadata: {
