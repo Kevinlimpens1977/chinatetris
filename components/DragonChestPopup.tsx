@@ -147,22 +147,6 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                                 </p>
                             </div>
 
-                            {/* Credits Display */}
-                            <div className="bg-black/30 rounded-xl p-4 border border-yellow-500/10">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xl">💳</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-wide">Totaal opgehaald</span>
-                                    </div>
-                                    <span className="text-lg font-bold text-green-400">
-                                        €{data.totalCredits}
-                                    </span>
-                                </div>
-                                <p className="text-[10px] text-gray-500 mt-2 text-center">
-                                    1 euro = 1 gouden munt
-                                </p>
-                            </div>
-
                             {/* Milestone Progress */}
                             <div className="bg-black/30 rounded-xl p-4 border border-yellow-500/10">
                                 <div className="flex items-center gap-2 mb-2">
@@ -187,7 +171,7 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                                         <span className="text-green-400">✅ Bereikt! Alle bijdragers ontvingen +1 credit</span>
                                     ) : (
                                         <span className="text-yellow-200/60">
-                                            Nog {500 - data.totalGoldenCoins} munten te gaan • Alle bijdragers krijgen +1 gratis credit!
+                                            Nog {Math.max(0, 500 - data.totalGoldenCoins)} munten te gaan • Alle bijdragers krijgen +1 gratis credit!
                                         </span>
                                     )}
                                 </p>
