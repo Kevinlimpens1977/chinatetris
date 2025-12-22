@@ -532,12 +532,22 @@ const App: React.FC = () => {
       });
     }
 
+    // === DEDUCT ONE CREDIT AFTER GAME ENDS (BEFORE REFRESH) ===
+    console.log('[GAME OVER] Deducting 1 credit from user', effectiveUid);
+    const creditDeducted = await deductCredit(effectiveUid);
+    if (creditDeducted) {
+      console.log('[GAME OVER] Credit deducted successfully');
+    } else {
+      console.error('[GAME OVER] Failed to deduct credit');
+    }
+
     // Refresh Leaderboard from Firestore
     const newLeaderboard = await getLeaderboard();
     console.log('[Dashboard] Refreshed leaderboard:', newLeaderboard.length, 'entries');
     setLeaderboard(newLeaderboard);
 
     // Refresh user data from Firestore to ensure dashboard shows Firestore truth
+    // This now includes the deducted credit
     const refreshedUserData = await loadUserData(effectiveUid);
     if (refreshedUserData) {
       console.log('[Dashboard] Refreshed user data from Firestore:', refreshedUserData);
@@ -553,16 +563,6 @@ const App: React.FC = () => {
     // Check if new high (simple check against top scores)
     const madeTop = newLeaderboard.some(entry => entry.highscore <= finalScore);
     setIsNewHigh(madeTop);
-
-    // === DEDUCT ONE CREDIT AFTER GAME ENDS ===
-    console.log('[GAME OVER] Deducting 1 credit from user', effectiveUid);
-    const creditDeducted = await deductCredit(effectiveUid);
-    if (creditDeducted) {
-      setUser(prev => prev ? { ...prev, credits: Math.max(0, (prev.credits || 0) - 1) } : null);
-      console.log('[GAME OVER] Credit deducted successfully');
-    } else {
-      console.error('[GAME OVER] Failed to deduct credit');
-    }
   };
 
   const movePiece = (dir: { x: number; y: number }) => {
