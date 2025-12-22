@@ -1,6 +1,16 @@
 import React from 'react';
+import { GameState } from '../types';
 
-const GlobalFooter: React.FC = () => {
+interface GlobalFooterProps {
+    gameState?: GameState;
+}
+
+const GlobalFooter: React.FC<GlobalFooterProps> = ({ gameState }) => {
+    // Hide footer during gameplay
+    if (gameState === GameState.PLAYING || gameState === GameState.GAME_OVER || gameState === GameState.LEVEL_UP) {
+        return null;
+    }
+
     return (
         <footer className="fixed bottom-0 left-0 w-full z-[150] pointer-events-none">
             <div className="bg-black/80 backdrop-blur-md border-t border-white/10 p-2 text-center text-[10px] md:text-xs text-gray-500 pointer-events-auto">

@@ -97,16 +97,19 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
 
                             {/* Welcome User */}
                             {user && (
-                                <div className="text-center">
-                                    <p className="text-sm md:text-base text-yellow-100/80 mb-2 flex items-center justify-center gap-2">
+                                <div className="text-center relative">
+                                    {/* Logout Button - Top right corner */}
+                                    <button
+                                        onClick={onLogout}
+                                        className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-gray-800 to-gray-900 hover:from-red-800 hover:to-red-900 rounded-full flex items-center justify-center border border-gray-600 hover:border-red-500 transition-all duration-200 shadow-lg group"
+                                        title="Uitloggen"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-red-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                    </button>
+                                    <p className="text-sm md:text-base text-yellow-100/80 mb-2">
                                         Ni hao, <span className="font-bold text-white text-lg">{user.name}</span>
-                                        <button
-                                            onClick={onLogout}
-                                            className="text-gray-400 hover:text-red-400 transition-colors text-xs"
-                                            title="Uitloggen"
-                                        >
-                                            (uitloggen)
-                                        </button>
                                     </p>
                                     <p className="text-[10px] text-gray-400 uppercase tracking-widest">
                                         Klaar voor je volgende uitdaging?
@@ -119,8 +122,8 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                             <button
                                 onClick={handleStartClick}
                                 className={`group relative w-full px-8 py-4 rounded-full text-white font-black text-xl md:text-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border ${hasCredits
-                                        ? 'bg-gradient-to-r from-red-600 to-red-700 shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 border-red-400/30'
-                                        : 'bg-gradient-to-r from-green-600 to-green-700 shadow-[0_0_20px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:from-green-500 hover:to-green-600 border-green-400/30'
+                                    ? 'bg-gradient-to-r from-red-600 to-red-700 shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 border-red-400/30'
+                                    : 'bg-gradient-to-r from-green-600 to-green-700 shadow-[0_0_20px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:from-green-500 hover:to-green-600 border-green-400/30'
                                     }`}
                             >
                                 <span className="animate-bounce">{hasCredits ? '🕹️' : '🪙'}</span>

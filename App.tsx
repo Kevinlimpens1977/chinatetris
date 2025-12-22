@@ -863,28 +863,20 @@ const App: React.FC = () => {
 
       {/* Credit and Dashboard screens are removed */}
 
-      {/* Close Button - Top-left on mobile, top-right on desktop */}
+      {/* Exit Button - Right side on both mobile and desktop */}
       {gameState === GameState.PLAYING && (
-        <div className="fixed top-2 left-2 md:top-3 md:right-3 md:left-auto z-[9999] flex flex-col gap-1">
-          {/* Dragon Exit Button */}
-          <button
-            onClick={handleExitClick}
-            className="group hover:scale-110 transition-transform"
-            title="Verlaten / Pauze"
-          >
-            <div className="relative w-10 h-10 md:w-16 md:h-16">
-              <div className="absolute inset-0 text-3xl md:text-5xl drop-shadow-md">🐉</div>
-              <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-4 h-4 md:w-6 md:h-6 flex items-center justify-center text-[8px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
-                ✕
-              </div>
+        <button
+          onClick={handleExitClick}
+          className="fixed top-2 right-2 md:top-3 md:right-3 z-[9999] group hover:scale-110 transition-transform"
+          title="Verlaten / Pauze"
+        >
+          <div className="relative w-12 h-12 md:w-14 md:h-14 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-500/30 shadow-lg">
+            <div className="text-2xl md:text-3xl drop-shadow-md">🐉</div>
+            <div className="absolute -bottom-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border-2 border-white shadow-lg">
+              ✕
             </div>
-          </button>
-          {/* Compact Player Info - Mobile Only, Below Dragon */}
-          <div className="md:hidden bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 border border-red-900/30">
-            <div className="text-[9px] text-white font-bold truncate max-w-[100px]">{user?.name}</div>
-            <div className="text-[8px] text-yellow-400">Top: {leaderboard[0]?.highscore?.toLocaleString() || 0}</div>
           </div>
-        </div>
+        </button>
       )}
 
       {/* Auth Loading Screen */}
@@ -968,62 +960,83 @@ const App: React.FC = () => {
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
-        <div className="flex flex-col w-full h-full max-w-7xl mx-auto p-0 md:p-4 overflow-hidden animate-fade-in-up">
+        <div className="flex w-full h-full overflow-hidden">
 
-          {/* Main Game Container - Mobile: vertical stack, Desktop: horizontal */}
-          <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-0 md:gap-8 w-full touch-none"
+          {/* Main Game Area - Full height, centered */}
+          <div className="flex-1 min-w-0 flex flex-col items-center justify-center touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-
-            {/* GameBoard Section - Takes priority on mobile */}
-            <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0 relative order-1">
-
-              {/* Desktop Header Only - Hidden on mobile */}
-              <div className="hidden md:block flex-none relative group overflow-hidden rounded-lg md:rounded-2xl p-[1px] w-full max-w-[95vw] md:max-w-none shadow-[0_0_10px_rgba(239,68,68,0.15)] mb-2">
-                <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
-                <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.5rem-1px)] md:rounded-[calc(1rem-2px)] p-1.5 md:p-3 flex items-center">
-                  <div className="flex justify-between items-center w-full">
-                    <div className="flex flex-col">
-                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
-                        Speler: <span className="text-white font-bold">{user?.name}</span>
-                      </div>
-                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
-                        Top: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* GameBoard - MAXIMIZED on mobile */}
-              <div className="flex-1 w-full flex items-center justify-center min-h-0">
-                <GameBoard
-                  grid={grid}
-                  activePiece={activePiece}
-                  lastAction={lastAction}
-                  clearingLines={clearingLines}
-                  ghostEnabled={ghostEnabled}
-                  penaltyAnimations={penaltyAnimations}
-                  level={stats.level}
-                />
-              </div>
-            </div>
-
-            {/* HUD - Below on mobile (compact), side on desktop */}
-            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-2 md:mt-20 px-1 md:px-0">
-              <HUD
-                stats={stats}
-                nextPiece={nextPiece}
+            {/* GameBoard - Centered and maximized */}
+            <div className="flex-1 w-full flex items-center justify-center p-1 md:p-2 min-h-0">
+              <GameBoard
+                grid={grid}
+                activePiece={activePiece}
+                lastAction={lastAction}
+                clearingLines={clearingLines}
                 ghostEnabled={ghostEnabled}
-                onToggleGhost={() => {
-                  if (isGhostAllowedForLevel(stats.level)) {
-                    setGhostEnabled(!ghostEnabled);
-                  }
-                }}
+                penaltyAnimations={penaltyAnimations}
+                level={stats.level}
               />
             </div>
+
+            {/* Mobile HUD - Compact horizontal row at bottom */}
+            <div className="md:hidden flex-none w-full px-1 pb-1">
+              <div className="flex gap-1 justify-between items-stretch">
+                {/* Score */}
+                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                  <div className="text-[8px] text-cyan-400 uppercase font-bold">Score</div>
+                  <div className="text-sm font-mono font-black text-white">{stats.score.toLocaleString()}</div>
+                </div>
+                {/* Level */}
+                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                  <div className="text-[8px] text-purple-400 uppercase font-bold">Level</div>
+                  <div className="text-sm font-mono font-black text-white">{stats.level}</div>
+                </div>
+                {/* Lines */}
+                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                  <div className="text-[8px] text-green-400 uppercase font-bold">Lijnen</div>
+                  <div className="text-sm font-mono font-black text-white">{stats.lines}</div>
+                </div>
+                {/* Next Piece - Slightly larger */}
+                <div className="w-14 bg-black/70 backdrop-blur-sm rounded-lg p-1 border border-yellow-500/30 flex flex-col items-center justify-center">
+                  <div className="text-[7px] text-yellow-400 uppercase font-bold mb-0.5">Volg</div>
+                  {nextPiece && (
+                    <div className="flex items-center justify-center scale-75">
+                      {TETROMINOS[nextPiece].shape.slice(0, 2).map((row, y) => (
+                        <div key={y} className="flex">
+                          {row.map((cell, x) => (
+                            <div
+                              key={`${y}-${x}`}
+                              className="w-2 h-2"
+                              style={{
+                                backgroundColor: cell ? TETROMINOS[nextPiece].color : 'transparent',
+                                boxShadow: cell ? `0 0 4px ${TETROMINOS[nextPiece].glowColor}` : 'none'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Sidebar HUD - Right side */}
+          <div className="hidden md:flex flex-col w-48 lg:w-56 h-full p-2 gap-2">
+            <HUD
+              stats={stats}
+              nextPiece={nextPiece}
+              ghostEnabled={ghostEnabled}
+              onToggleGhost={() => {
+                if (isGhostAllowedForLevel(stats.level)) {
+                  setGhostEnabled(!ghostEnabled);
+                }
+              }}
+            />
           </div>
         </div>
       )}
@@ -1044,8 +1057,8 @@ const App: React.FC = () => {
         <DebugPanel currentLevel={stats.level} visible={showDebugPanel} />
       )}
 
-      {/* Footer Disclaimer */}
-      <GlobalFooter />
+      {/* Footer Disclaimer - Hidden during gameplay */}
+      <GlobalFooter gameState={gameState} />
     </div>
   );
 };
