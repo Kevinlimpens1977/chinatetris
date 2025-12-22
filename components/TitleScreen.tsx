@@ -217,41 +217,61 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
 
                 {/* Right Column: Leaderboard */}
                 <div className="h-full min-h-[300px]">
-                    <ChinaContainer className="h-full flex flex-col" noPadding={true}>
-                        <div className="bg-red-900/20 p-3 md:p-4 border-b border-red-500/30 flex justify-between items-center shrink-0">
-                            <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-white flex items-center gap-2">
-                                <span className="text-lg">📜</span> Top 5 Highscores
-                            </span>
-                            <span className="text-[10px] text-red-100 font-bold bg-red-600 px-2 py-0.5 rounded shadow-sm animate-pulse">LIVE</span>
+                    <ChinaContainer className="h-full flex flex-col bg-gradient-to-b from-red-950/60 to-black/80" noPadding={true}>
+                        {/* Retro Header */}
+                        <div className="p-3 md:p-4 border-b border-red-500/30 text-center shrink-0">
+                            <h2 className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-red-400"
+                                style={{ fontFamily: 'monospace', textShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
+                                GLOBAL LEADERBOARD
+                            </h2>
                         </div>
 
-                        <div className="flex-1 p-2 overflow-y-auto scrollbar-hide">
+                        {/* Retro Leaderboard List */}
+                        <div className="flex-1 p-3 md:p-4 overflow-y-auto scrollbar-hide">
                             {leaderboard.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
                                     <span className="text-4xl mb-2 opacity-50">🐉</span>
-                                    <p className="text-sm italic">Nog geen scores. Wees de eerste!</p>
+                                    <p className="text-sm italic font-mono">WAITING FOR PLAYERS...</p>
                                 </div>
                             ) : (
-                                <div className="space-y-1">
-                                    {leaderboard.map((entry, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 md:p-3 rounded-lg bg-black/20 hover:bg-white/10 transition-colors border border-transparent hover:border-white/20 group">
-                                            <div className="flex items-center gap-3 md:gap-4">
-                                                <span className={`
-                                                    w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full text-[10px] md:text-xs font-black border
-                                                    ${idx === 0 ? 'bg-yellow-400 text-yellow-900 border-yellow-200 shadow-yellow-500/50 shadow-sm' :
-                                                        idx === 1 ? 'bg-gray-300 text-gray-800 border-gray-100' :
-                                                            idx === 2 ? 'bg-amber-600 text-amber-100 border-amber-400' : 'bg-white/10 text-gray-400 border-transparent'}
-                                                `}>
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="flex flex-col text-left">
-                                                    <span className="text-xs md:text-sm font-bold text-gray-100 truncate max-w-[120px] md:max-w-[150px] group-hover:text-white transition-colors">{entry.name}</span>
-                                                    <span className="text-[10px] text-gray-500 truncate max-w-[120px] md:max-w-[150px]">{entry.city}</span>
+                                <div className="space-y-2">
+                                    {leaderboard.slice(0, 7).map((entry, idx) => {
+                                        // Retro color scheme: Gold, Silver, Bronze for top 3
+                                        const rankColors = [
+                                            'text-yellow-400', // #1 Gold
+                                            'text-cyan-400',   // #2 Cyan/Silver
+                                            'text-green-400',  // #3 Green/Bronze
+                                        ];
+                                        const scoreColors = [
+                                            'text-yellow-400',
+                                            'text-cyan-400',
+                                            'text-green-400',
+                                        ];
+                                        const rankColor = rankColors[idx] || 'text-gray-400';
+                                        const scoreColor = scoreColors[idx] || 'text-white';
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center justify-between font-mono text-xs md:text-sm tracking-wide"
+                                                style={{ fontFamily: 'monospace' }}
+                                            >
+                                                {/* Rank & Name */}
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <span className={`${rankColor} font-black w-6 shrink-0`}>
+                                                        #{idx + 1}
+                                                    </span>
+                                                    <span className="text-white font-bold uppercase truncate">
+                                                        {entry.name?.replace(/\s+/g, '_') || 'PLAYER'}
+                                                    </span>
                                                 </div>
+                                                {/* Score */}
+                                                <span className={`${scoreColor} font-black tabular-nums shrink-0 ml-2`}>
+                                                    {entry.highscore?.toLocaleString() || 0}
+                                                </span>
                                             </div>
-                                            <span className="text-xs md:text-sm font-mono text-cyan-300 font-bold drop-shadow-sm">{entry.highscore.toLocaleString()}</span>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
