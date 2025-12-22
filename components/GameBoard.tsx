@@ -653,11 +653,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div
             ref={containerRef}
             className="
-      relative w-full h-full max-w-[90vw] md:max-w-none
-      max-h-[calc(100vh-100px)] md:max-h-[calc(100vh-60px)]
+      relative w-full h-full
+      max-w-[100vw] md:max-w-none
       flex items-center justify-center
       rounded-xl
-      p-1
+      p-0 md:p-1
     "
             style={{
                 aspectRatio: `${TOTAL_WIDTH_BLOCKS}/${TOTAL_HEIGHT_BLOCKS}`
