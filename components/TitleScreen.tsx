@@ -5,6 +5,7 @@ import GhostInfoPanel from './GhostInfoPanel';
 interface TitleScreenProps {
     onStart: () => void;
     onLogout: () => void;
+    onOpenCreditShop: () => void;
     leaderboard: LeaderboardEntry[];
     user: UserData | null;
 }
@@ -44,8 +45,18 @@ const ChinaContainer: React.FC<ChinaContainerProps> = ({
     );
 };
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, leaderboard, user }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, leaderboard, user }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
+
+    const hasCredits = (user?.credits || 0) > 0;
+
+    const handleStartClick = () => {
+        if (hasCredits) {
+            onStart();
+        } else {
+            onOpenCreditShop();
+        }
+    };
 
     return (
         <div className="relative z-10 flex flex-col items-center w-full h-full min-h-[100dvh] overflow-y-auto overflow-x-hidden py-4 px-4 md:py-8">
@@ -106,13 +117,27 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, leaderboar
 
                             {/* CTA Button */}
                             <button
-                                onClick={onStart}
-                                className="group relative w-full px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-xl md:text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border border-red-400/30"
+                                onClick={handleStartClick}
+                                className={`group relative w-full px-8 py-4 rounded-full text-white font-black text-xl md:text-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border ${hasCredits
+                                        ? 'bg-gradient-to-r from-red-600 to-red-700 shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_rgba(220,38,38,0.7)] hover:from-red-500 hover:to-red-600 border-red-400/30'
+                                        : 'bg-gradient-to-r from-green-600 to-green-700 shadow-[0_0_20px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:from-green-500 hover:to-green-600 border-green-400/30'
+                                    }`}
                             >
-                                <span className="animate-bounce">🕹️</span>
-                                {user ? 'SPEEL SPEL' : 'START SPEL'}
-                                <span className="animate-bounce delay-100">🐉</span>
+                                <span className="animate-bounce">{hasCredits ? '🕹️' : '🪙'}</span>
+                                {hasCredits ? 'SPEEL SPEL' : 'KOOP TOKENS'}
+                                <span className="animate-bounce delay-100">{hasCredits ? '🐉' : '💳'}</span>
                             </button>
+
+                            {/* Buy More Tokens (only shown if has credits) */}
+                            {hasCredits && (
+                                <button
+                                    onClick={onOpenCreditShop}
+                                    className="group relative w-full px-6 py-2 rounded-full bg-gradient-to-r from-green-700/80 to-emerald-700/80 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-xs md:text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-green-400/20"
+                                >
+                                    <span className="text-lg">🪙</span>
+                                    <span>Meer Tokens Kopen</span>
+                                </button>
+                            )}
 
                             {/* Ghost Info Button */}
                             <button
@@ -139,11 +164,15 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, leaderboar
                                 <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Jouw Prestaties</h3>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Tokens:</span>
+                                        <span className={`text-lg md:text-xl font-mono font-black ${hasCredits ? 'text-green-400' : 'text-red-400'}`}>{user?.credits || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Highscore:</span>
                                         <span className="text-lg md:text-xl font-mono font-black text-white">{(user?.highscore || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Totaal Tickets:</span>
+                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Tickets:</span>
                                         <span className="text-lg md:text-xl font-mono font-black text-yellow-400">{user?.tickets || 0}</span>
                                     </div>
                                 </div>

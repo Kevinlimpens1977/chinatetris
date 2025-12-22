@@ -10,9 +10,10 @@ import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
 import GlobalFooter from './components/GlobalFooter';
+import CreditShop from './components/CreditShop';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists } from './services/backend';
+import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists, deductCredit } from './services/backend';
 import { onAuthStateChanged, signOut, getStoredUid } from './services/authService';
 
 // -- Gravity Function: Professional 10-level system --
@@ -216,6 +217,34 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // --- Handle Stripe payment success/cancelled URL params ---
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+
+    if (paymentStatus === 'success') {
+      console.log('💳 Payment successful! Refreshing user data...');
+      // Clear URL params
+      window.history.replaceState({}, '', window.location.pathname);
+
+      // Refresh user data to get updated credits
+      const uid = user?.uid || getStoredUid();
+      if (uid) {
+        loadUserData(uid).then(userData => {
+          if (userData) {
+            setUser(prev => prev ? {
+              ...prev,
+              credits: userData.credits || 0
+            } : null);
+          }
+        });
+      }
+    } else if (paymentStatus === 'cancelled') {
+      console.log('💳 Payment cancelled');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [user?.uid]);
 
 
   // --- Logic ---
@@ -524,6 +553,16 @@ const App: React.FC = () => {
     // Check if new high (simple check against top scores)
     const madeTop = newLeaderboard.some(entry => entry.highscore <= finalScore);
     setIsNewHigh(madeTop);
+
+    // === DEDUCT ONE CREDIT AFTER GAME ENDS ===
+    console.log('[GAME OVER] Deducting 1 credit from user', effectiveUid);
+    const creditDeducted = await deductCredit(effectiveUid);
+    if (creditDeducted) {
+      setUser(prev => prev ? { ...prev, credits: Math.max(0, (prev.credits || 0) - 1) } : null);
+      console.log('[GAME OVER] Credit deducted successfully');
+    } else {
+      console.error('[GAME OVER] Failed to deduct credit');
+    }
   };
 
   const movePiece = (dir: { x: number; y: number }) => {
@@ -888,8 +927,27 @@ const App: React.FC = () => {
         <TitleScreen
           onStart={handleStartClick}
           onLogout={signOut}
+          onOpenCreditShop={() => setGameState(GameState.CREDIT_SHOP)}
           leaderboard={leaderboard}
           user={user}
+        />
+      )}
+
+      {/* Credit Shop */}
+      {gameState === GameState.CREDIT_SHOP && (
+        <CreditShop
+          user={user}
+          onClose={() => setGameState(GameState.TITLE)}
+          onPurchaseSuccess={async () => {
+            // Refresh user data after successful purchase
+            if (user?.uid) {
+              const userData = await loadUserData(user.uid);
+              if (userData) {
+                setUser(prev => prev ? { ...prev, credits: userData.credits } : null);
+              }
+            }
+            setGameState(GameState.TITLE);
+          }}
         />
       )}
 

@@ -239,6 +239,13 @@ export const updateCredits = async (uid: string, delta: number): Promise<boolean
 };
 
 /**
+ * Deduct one credit from user (called after game ends)
+ */
+export const deductCredit = async (uid: string): Promise<boolean> => {
+    return firebaseService.deductOneCredit(uid);
+};
+
+/**
  * ONE-TIME MIGRATION: Backfill displayNames for old highscores
  * For highscores where displayName === "Speler", fetch from auth or users collection
  * Run only in dev mode

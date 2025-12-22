@@ -32,6 +32,15 @@ export const BONUS_TICKET_THRESHOLDS = {
   TIER_3: 700    // 5 Bonus Tickets
 };
 
+// Token Packages for Stripe Purchase
+export const TOKEN_PACKAGES = [
+  { id: 'pack_1', tokens: 1, priceEuroCents: 500, label: '1 Token', description: '€5,00' },
+  { id: 'pack_3', tokens: 3, priceEuroCents: 1200, label: '3 Tokens', description: '€12,00 (bespaar 20%)' },
+  { id: 'pack_5', tokens: 5, priceEuroCents: 1500, label: '5 Tokens', description: '€15,00 (bespaar 40%)' }
+] as const;
+
+export type TokenPackage = typeof TOKEN_PACKAGES[number];
+
 export const TETROMINOS: Record<TetrominoType, Tetromino> = {
   I: {
     type: 'I',

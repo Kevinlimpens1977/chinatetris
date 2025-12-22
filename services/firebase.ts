@@ -404,6 +404,173 @@ export const firebaseService = {
             console.error("Error in getTopHighscores:", e);
             return [];
         }
+    },
+
+    // ==================== CREDITS MANAGEMENT ====================
+
+    /**
+     * Get user's current credits
+     */
+    async getUserCredits(uid: string): Promise<number> {
+        if (!db) {
+            console.error("getUserCredits: Firestore not available");
+            return 0;
+        }
+        try {
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                return userSnap.data().credits || 0;
+            }
+            return 0;
+        } catch (e) {
+            console.error("Error in getUserCredits:", e);
+            return 0;
+        }
+    },
+
+    /**
+     * Add credits to user (called after successful Stripe payment)
+     * @param creditsToAdd - number of credits to add (positive number)
+     */
+    async addUserCredits(uid: string, creditsToAdd: number): Promise<boolean> {
+        if (!db) {
+            console.error("addUserCredits: Firestore not available");
+            return false;
+        }
+        if (creditsToAdd <= 0) {
+            console.error("addUserCredits: creditsToAdd must be positive");
+            return false;
+        }
+        try {
+            const userRef = doc(db, 'users', uid);
+            await setDoc(userRef, {
+                credits: increment(creditsToAdd),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            console.log(`💰 Added ${creditsToAdd} credits to user ${uid}`);
+            return true;
+        } catch (e) {
+            console.error("Error in addUserCredits:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Deduct one credit from user (called after game ends)
+     */
+    async deductOneCredit(uid: string): Promise<boolean> {
+        if (!db) {
+            console.error("deductOneCredit: Firestore not available");
+            return false;
+        }
+        try {
+            const userRef = doc(db, 'users', uid);
+
+            // Use transaction to ensure we don't go negative
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User document does not exist");
+                }
+
+                const currentCredits = userDoc.data().credits || 0;
+                if (currentCredits <= 0) {
+                    throw new Error("No credits to deduct");
+                }
+
+                transaction.update(userRef, {
+                    credits: increment(-1),
+                    updatedAt: serverTimestamp()
+                });
+            });
+
+            console.log(`🎮 Deducted 1 credit from user ${uid}`);
+            return true;
+        } catch (e) {
+            console.error("Error in deductOneCredit:", e);
+            return false;
+        }
+    },
+
+    // ==================== TRANSACTIONS COLLECTION ====================
+
+    /**
+     * Create a pending transaction record
+     */
+    async createTransaction(
+        uid: string,
+        stripeSessionId: string,
+        packageId: string,
+        credits: number,
+        amountCents: number
+    ): Promise<string | null> {
+        if (!db) {
+            console.error("createTransaction: Firestore not available");
+            return null;
+        }
+        try {
+            const docRef = await addDoc(collection(db, 'transactions'), {
+                uid,
+                stripeSessionId,
+                packageId,
+                credits,
+                amountCents,
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
+            console.log(`📝 Created transaction ${docRef.id} for user ${uid}`);
+            return docRef.id;
+        } catch (e) {
+            console.error("Error in createTransaction:", e);
+            return null;
+        }
+    },
+
+    /**
+     * Complete a transaction and add credits
+     */
+    async completeTransaction(stripeSessionId: string): Promise<boolean> {
+        if (!db) {
+            console.error("completeTransaction: Firestore not available");
+            return false;
+        }
+        try {
+            // Find transaction by stripeSessionId
+            const q = query(
+                collection(db, 'transactions'),
+                where('stripeSessionId', '==', stripeSessionId),
+                where('status', '==', 'pending')
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                console.warn(`No pending transaction found for session ${stripeSessionId}`);
+                return false;
+            }
+
+            const transactionDoc = querySnapshot.docs[0];
+            const transactionData = transactionDoc.data();
+
+            // Add credits to user
+            const creditsAdded = await this.addUserCredits(transactionData.uid, transactionData.credits);
+            if (!creditsAdded) {
+                console.error("Failed to add credits for transaction");
+                return false;
+            }
+
+            // Update transaction status
+            await setDoc(doc(db, 'transactions', transactionDoc.id), {
+                status: 'completed',
+                completedAt: serverTimestamp()
+            }, { merge: true });
+
+            console.log(`✅ Completed transaction ${transactionDoc.id}`);
+            return true;
+        } catch (e) {
+            console.error("Error in completeTransaction:", e);
+            return false;
+        }
     }
 };
 
