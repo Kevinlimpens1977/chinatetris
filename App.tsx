@@ -9,7 +9,6 @@ import LevelUpScreen from './components/LevelUpScreen';
 import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
-import GlobalFooter from './components/GlobalFooter';
 import CreditShop from './components/CreditShop';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
@@ -863,16 +862,16 @@ const App: React.FC = () => {
 
       {/* Credit and Dashboard screens are removed */}
 
-      {/* Exit Button - Right side on both mobile and desktop */}
+      {/* Close Button - Top-left on mobile, top-right on desktop */}
       {gameState === GameState.PLAYING && (
         <button
           onClick={handleExitClick}
-          className="fixed top-2 right-2 md:top-3 md:right-3 z-[9999] group hover:scale-110 transition-transform"
+          className="fixed top-2 left-2 md:top-3 md:right-3 md:left-auto z-[9999] group hover:scale-110 transition-transform"
           title="Verlaten / Pauze"
         >
-          <div className="relative w-12 h-12 md:w-14 md:h-14 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-500/30 shadow-lg">
-            <div className="text-2xl md:text-3xl drop-shadow-md">🐉</div>
-            <div className="absolute -bottom-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold border-2 border-white shadow-lg">
+          <div className="relative w-10 h-10 md:w-16 md:h-16">
+            <div className="absolute inset-0 text-3xl md:text-5xl drop-shadow-md">🐉</div>
+            <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full w-4 h-4 md:w-6 md:h-6 flex items-center justify-center text-[8px] md:text-xs font-bold border border-white shadow-lg animate-pulse-fast">
               ✕
             </div>
           </div>
@@ -960,81 +959,62 @@ const App: React.FC = () => {
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
-        <div className="flex flex-col md:flex-row w-full h-full items-center justify-center overflow-hidden p-1 md:p-4 gap-2 md:gap-6">
+        <div className="flex flex-col w-full h-full max-w-[1200px] mx-auto px-2 md:px-4 py-1 md:py-2 overflow-hidden animate-fade-in-up">
 
-          {/* GameBoard Container - Takes most of the space */}
-          <div
-            className="flex-1 min-h-0 min-w-0 flex items-center justify-center w-full md:w-auto touch-none"
+          {/* Main Game Container - CSS Grid for desktop, flex for mobile */}
+          <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center justify-center gap-2 md:gap-4 w-full touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <GameBoard
-              grid={grid}
-              activePiece={activePiece}
-              lastAction={lastAction}
-              clearingLines={clearingLines}
-              ghostEnabled={ghostEnabled}
-              penaltyAnimations={penaltyAnimations}
-              level={stats.level}
-            />
-          </div>
 
-          {/* Mobile HUD - Compact horizontal row at bottom */}
-          <div className="md:hidden flex-none w-full">
-            <div className="flex gap-1 justify-between items-stretch">
-              {/* Score */}
-              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                <div className="text-[8px] text-cyan-400 uppercase font-bold">Score</div>
-                <div className="text-sm font-mono font-black text-white">{stats.score.toLocaleString()}</div>
-              </div>
-              {/* Level */}
-              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                <div className="text-[8px] text-purple-400 uppercase font-bold">Level</div>
-                <div className="text-sm font-mono font-black text-white">{stats.level}</div>
-              </div>
-              {/* Lines */}
-              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                <div className="text-[8px] text-green-400 uppercase font-bold">Lijnen</div>
-                <div className="text-sm font-mono font-black text-white">{stats.lines}</div>
-              </div>
-              {/* Next Piece */}
-              <div className="w-14 bg-black/70 backdrop-blur-sm rounded-lg p-1 border border-yellow-500/30 flex flex-col items-center justify-center">
-                <div className="text-[7px] text-yellow-400 uppercase font-bold mb-0.5">Volg</div>
-                {nextPiece && (
-                  <div className="flex flex-col items-center justify-center">
-                    {TETROMINOS[nextPiece].shape.slice(0, 2).map((row, y) => (
-                      <div key={y} className="flex">
-                        {row.map((cell, x) => (
-                          <div
-                            key={`${y}-${x}`}
-                            className="w-2 h-2"
-                            style={{
-                              backgroundColor: cell ? TETROMINOS[nextPiece].color : 'transparent',
-                              boxShadow: cell ? `0 0 4px ${TETROMINOS[nextPiece].glowColor}` : 'none'
-                            }}
-                          />
-                        ))}
+            {/* GameBoard Section - Primary focus, takes available space */}
+            <div className="flex flex-col items-center justify-center min-h-0 h-full w-full order-1 gap-1 md:gap-2">
+
+              {/* Compact Header - Same width as GameBoard */}
+              <div className="flex-none relative group overflow-hidden rounded-lg md:rounded-xl p-[1px] w-full max-w-[95vw] md:max-w-none shadow-[0_0_10px_rgba(239,68,68,0.15)]">
+                <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
+                <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.5rem-1px)] md:rounded-[calc(0.75rem-2px)] p-1.5 md:p-2 flex items-center">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex flex-col">
+                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
+                        Speler: <span className="text-white font-bold">{user?.name}</span>
                       </div>
-                    ))}
+                      <div className="text-[9px] md:text-xs uppercase tracking-widest text-gray-400">
+                        Top: <span className="text-yellow-400 font-bold">{leaderboard[0]?.highscore?.toLocaleString() || 0}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
+              </div>
+
+              {/* GameBoard - Maximized viewport usage */}
+              <div className="flex-1 w-full flex items-center justify-center min-h-0 max-h-[85vh]">
+                <GameBoard
+                  grid={grid}
+                  activePiece={activePiece}
+                  lastAction={lastAction}
+                  clearingLines={clearingLines}
+                  ghostEnabled={ghostEnabled}
+                  penaltyAnimations={penaltyAnimations}
+                  level={stats.level}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Desktop HUD - Side panel */}
-          <div className="hidden md:flex flex-col flex-none w-52 lg:w-60 h-auto max-h-full">
-            <HUD
-              stats={stats}
-              nextPiece={nextPiece}
-              ghostEnabled={ghostEnabled}
-              onToggleGhost={() => {
-                if (isGhostAllowedForLevel(stats.level)) {
-                  setGhostEnabled(!ghostEnabled);
-                }
-              }}
-            />
+            {/* HUD - Right side on desktop, below on mobile */}
+            <div className="flex-none w-full md:w-auto h-auto md:h-full flex items-center justify-center md:items-start order-2 md:self-start md:pt-8">
+              <HUD
+                stats={stats}
+                nextPiece={nextPiece}
+                ghostEnabled={ghostEnabled}
+                onToggleGhost={() => {
+                  if (isGhostAllowedForLevel(stats.level)) {
+                    setGhostEnabled(!ghostEnabled);
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1054,9 +1034,6 @@ const App: React.FC = () => {
       {gameState === GameState.PLAYING && (
         <DebugPanel currentLevel={stats.level} visible={showDebugPanel} />
       )}
-
-      {/* Footer Disclaimer - Hidden during gameplay */}
-      <GlobalFooter gameState={gameState} />
     </div>
   );
 };
