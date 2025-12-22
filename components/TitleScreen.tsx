@@ -134,7 +134,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                     onClick={onOpenCreditShop}
                                     className="group relative w-full px-6 py-2 rounded-full bg-gradient-to-r from-green-700/80 to-emerald-700/80 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-xs md:text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-green-400/20"
                                 >
-                                    <span className="text-lg">🪙</span>
+                                    <span className="text-base">💰</span>
                                     <span>Meer Tokens Kopen</span>
                                 </button>
                             )}
