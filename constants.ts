@@ -25,11 +25,11 @@ export const GLOWS = {
   Z: '#fca5a5',
 };
 
-// Bonus Ticket Thresholds (Config)
+// Bonus Ticket Thresholds (Config) - TEMPORARY TEST VALUES
 export const BONUS_TICKET_THRESHOLDS = {
-  TIER_1: 5000,   // 1 Bonus Ticket
-  TIER_2: 15000,  // 2 Bonus Tickets
-  TIER_3: 30000   // 5 Bonus Tickets
+  TIER_1: 400,   // 1 Bonus Ticket
+  TIER_2: 500,   // 2 Bonus Tickets
+  TIER_3: 700    // 5 Bonus Tickets
 };
 
 export const TETROMINOS: Record<TetrominoType, Tetromino> = {
