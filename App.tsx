@@ -960,73 +960,71 @@ const App: React.FC = () => {
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
-        <div className="flex w-full h-full overflow-hidden">
+        <div className="flex flex-col md:flex-row w-full h-full items-center justify-center overflow-hidden p-1 md:p-4 gap-2 md:gap-6">
 
-          {/* Main Game Area - Full height, centered */}
-          <div className="flex-1 min-w-0 flex flex-col items-center justify-center touch-none"
+          {/* GameBoard Container - Takes most of the space */}
+          <div
+            className="flex-1 min-h-0 min-w-0 flex items-center justify-center w-full md:w-auto touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* GameBoard - Centered and maximized */}
-            <div className="flex-1 w-full flex items-center justify-center p-1 md:p-2 min-h-0">
-              <GameBoard
-                grid={grid}
-                activePiece={activePiece}
-                lastAction={lastAction}
-                clearingLines={clearingLines}
-                ghostEnabled={ghostEnabled}
-                penaltyAnimations={penaltyAnimations}
-                level={stats.level}
-              />
-            </div>
+            <GameBoard
+              grid={grid}
+              activePiece={activePiece}
+              lastAction={lastAction}
+              clearingLines={clearingLines}
+              ghostEnabled={ghostEnabled}
+              penaltyAnimations={penaltyAnimations}
+              level={stats.level}
+            />
+          </div>
 
-            {/* Mobile HUD - Compact horizontal row at bottom */}
-            <div className="md:hidden flex-none w-full px-1 pb-1">
-              <div className="flex gap-1 justify-between items-stretch">
-                {/* Score */}
-                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                  <div className="text-[8px] text-cyan-400 uppercase font-bold">Score</div>
-                  <div className="text-sm font-mono font-black text-white">{stats.score.toLocaleString()}</div>
-                </div>
-                {/* Level */}
-                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                  <div className="text-[8px] text-purple-400 uppercase font-bold">Level</div>
-                  <div className="text-sm font-mono font-black text-white">{stats.level}</div>
-                </div>
-                {/* Lines */}
-                <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
-                  <div className="text-[8px] text-green-400 uppercase font-bold">Lijnen</div>
-                  <div className="text-sm font-mono font-black text-white">{stats.lines}</div>
-                </div>
-                {/* Next Piece - Slightly larger */}
-                <div className="w-14 bg-black/70 backdrop-blur-sm rounded-lg p-1 border border-yellow-500/30 flex flex-col items-center justify-center">
-                  <div className="text-[7px] text-yellow-400 uppercase font-bold mb-0.5">Volg</div>
-                  {nextPiece && (
-                    <div className="flex items-center justify-center scale-75">
-                      {TETROMINOS[nextPiece].shape.slice(0, 2).map((row, y) => (
-                        <div key={y} className="flex">
-                          {row.map((cell, x) => (
-                            <div
-                              key={`${y}-${x}`}
-                              className="w-2 h-2"
-                              style={{
-                                backgroundColor: cell ? TETROMINOS[nextPiece].color : 'transparent',
-                                boxShadow: cell ? `0 0 4px ${TETROMINOS[nextPiece].glowColor}` : 'none'
-                              }}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          {/* Mobile HUD - Compact horizontal row at bottom */}
+          <div className="md:hidden flex-none w-full">
+            <div className="flex gap-1 justify-between items-stretch">
+              {/* Score */}
+              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                <div className="text-[8px] text-cyan-400 uppercase font-bold">Score</div>
+                <div className="text-sm font-mono font-black text-white">{stats.score.toLocaleString()}</div>
+              </div>
+              {/* Level */}
+              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                <div className="text-[8px] text-purple-400 uppercase font-bold">Level</div>
+                <div className="text-sm font-mono font-black text-white">{stats.level}</div>
+              </div>
+              {/* Lines */}
+              <div className="flex-1 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 border border-red-900/30 text-center">
+                <div className="text-[8px] text-green-400 uppercase font-bold">Lijnen</div>
+                <div className="text-sm font-mono font-black text-white">{stats.lines}</div>
+              </div>
+              {/* Next Piece */}
+              <div className="w-14 bg-black/70 backdrop-blur-sm rounded-lg p-1 border border-yellow-500/30 flex flex-col items-center justify-center">
+                <div className="text-[7px] text-yellow-400 uppercase font-bold mb-0.5">Volg</div>
+                {nextPiece && (
+                  <div className="flex flex-col items-center justify-center">
+                    {TETROMINOS[nextPiece].shape.slice(0, 2).map((row, y) => (
+                      <div key={y} className="flex">
+                        {row.map((cell, x) => (
+                          <div
+                            key={`${y}-${x}`}
+                            className="w-2 h-2"
+                            style={{
+                              backgroundColor: cell ? TETROMINOS[nextPiece].color : 'transparent',
+                              boxShadow: cell ? `0 0 4px ${TETROMINOS[nextPiece].glowColor}` : 'none'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Desktop Sidebar HUD - Right side */}
-          <div className="hidden md:flex flex-col w-48 lg:w-56 h-full p-2 gap-2">
+          {/* Desktop HUD - Side panel */}
+          <div className="hidden md:flex flex-col flex-none w-52 lg:w-60 h-auto max-h-full">
             <HUD
               stats={stats}
               nextPiece={nextPiece}
