@@ -148,8 +148,8 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
           hover:scale-105 active:scale-95
         `}
       >
-        <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
-        <div className={`relative w-full h-full backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3 transition-colors ${ghostEnabled ? 'bg-red-900/60' : 'bg-gray-900/60'
+        <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#fbbf24_20%,#b91c1c_40%,#fbbf24_60%,#b91c1c_80%,#fbbf24_100%)] animate-spin-slow opacity-60"></div>
+        <div className={`relative w-full h-full backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3 transition-colors ${ghostEnabled ? 'bg-red-900/60' : 'bg-black/80'
           }`}>
           <div className="text-[9px] md:text-xs font-bold text-red-300 uppercase tracking-[0.15em] mb-1 flex items-center gap-1.5 opacity-80">
             <span className="text-base">👻</span> GHOST
