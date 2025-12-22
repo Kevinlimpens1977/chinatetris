@@ -53,8 +53,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const host = req.headers.host || '';
         let siteUrl: string;
 
-        if (host.includes('chinareis.nl')) {
-            siteUrl = 'https://www.chinareis.nl';
+        if (host.includes('chinatetris.nl')) {
+            siteUrl = 'https://www.chinatetris.nl';
         } else if (host.includes('chinatetris.vercel.app')) {
             siteUrl = 'https://chinatetris.vercel.app';
         } else if (process.env.VITE_SITE_URL) {
