@@ -172,10 +172,10 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
   const showGhostToggle = isGhostAllowedForLevel(stats.level);
 
   return (
-    <div className="flex flex-row md:flex-col gap-1.5 md:gap-3 w-full h-auto md:h-full justify-between md:justify-start items-stretch md:items-stretch py-1 md:py-0 md:w-32 lg:w-40">
+    <div className="flex flex-row md:flex-col gap-1 md:gap-3 w-full h-[60px] md:h-full justify-between md:justify-start items-stretch md:items-stretch py-0 md:py-0 md:w-32 lg:w-40 px-1 md:px-0">
 
       {/* Stats Section */}
-      <div className="flex flex-row md:flex-col gap-1.5 md:gap-2 flex-[2] md:flex-none order-1 md:order-2">
+      <div className="flex flex-row md:flex-col gap-1 md:gap-2 flex-[2] md:flex-none order-1 md:order-2">
         {/* SCORE */}
         <StatBox
           label="Score"
@@ -210,16 +210,16 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
       </div>
 
       {/* Next Piece & Ghost Toggle */}
-      <div className="flex flex-row md:flex-col gap-1.5 md:gap-2 flex-1 md:flex-none justify-end order-2 md:order-1">
+      <div className="flex flex-row md:flex-col gap-1 md:gap-2 flex-1 md:flex-none justify-end order-2 md:order-1">
         {/* GHOST TOGGLE */}
         {showGhostToggle && (
-          <div className="w-16 md:w-full">
+          <div className="w-14 md:w-full">
             <GhostToggle />
           </div>
         )}
 
         {/* NEXT PIECE */}
-        <div className="w-16 md:w-full min-h-[60px] md:min-h-0">
+        <div className="w-14 md:w-full min-h-0 md:min-h-0">
           <NextPieceBox type={nextPiece} />
         </div>
       </div>

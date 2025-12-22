@@ -962,20 +962,20 @@ const App: React.FC = () => {
       )}
 
       {(gameState === GameState.PLAYING || gameState === GameState.GAME_OVER) && (
-        <div className="flex flex-col w-full h-full max-w-[1200px] mx-auto px-2 md:px-4 py-1 md:py-2 overflow-hidden animate-fade-in-up">
+        <div className="flex flex-col w-full h-[100dvh] md:h-full max-w-[1200px] mx-auto px-0 md:px-4 py-0 md:py-2 overflow-hidden animate-fade-in-up">
 
           {/* Main Game Container - CSS Grid for desktop, flex for mobile */}
-          <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center justify-center gap-2 md:gap-4 w-full touch-none"
+          <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center justify-center gap-0 md:gap-4 w-full touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
 
             {/* GameBoard Section - Primary focus, takes available space */}
-            <div className="flex flex-col items-center justify-center min-h-0 h-full w-full order-1 gap-1 md:gap-2">
+            <div className="flex flex-col items-center justify-center min-h-0 h-full w-full order-1 gap-0 md:gap-2">
 
-              {/* Compact Header - Same width as GameBoard */}
-              <div className="flex-none relative group overflow-hidden rounded-lg md:rounded-xl p-[1px] w-full max-w-[95vw] md:max-w-none shadow-[0_0_10px_rgba(239,68,68,0.15)]">
+              {/* Compact Header - Hidden on mobile, visible on desktop */}
+              <div className="hidden md:flex flex-none relative group overflow-hidden rounded-lg md:rounded-xl p-[1px] w-full max-w-[95vw] md:max-w-none shadow-[0_0_10px_rgba(239,68,68,0.15)]">
                 <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#ef4444_20%,#ffffff_25%,#ef4444_30%,#b91c1c_50%,#ef4444_70%,#ffffff_75%,#ef4444_80%,#b91c1c_100%)] animate-spin-slow opacity-50"></div>
                 <div className="relative w-full h-full bg-black/60 backdrop-blur-xl rounded-[calc(0.5rem-1px)] md:rounded-[calc(0.75rem-2px)] p-1.5 md:p-2 flex items-center">
                   <div className="flex justify-between items-center w-full">
