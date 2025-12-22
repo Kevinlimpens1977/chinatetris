@@ -70,19 +70,17 @@ export const createCheckoutSession = async (
 };
 
 /**
- * Redirect to Stripe Checkout
+ * Redirect to Stripe Checkout using the URL from the session
+ * Note: stripe.redirectToCheckout is deprecated in newer versions
  */
-export const redirectToCheckout = async (sessionId: string): Promise<void> => {
-    const stripe = await getStripe();
-    if (!stripe) {
-        console.error('Stripe not initialized');
+export const redirectToCheckout = async (checkoutUrl: string): Promise<void> => {
+    if (!checkoutUrl) {
+        console.error('No checkout URL provided');
         return;
     }
 
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-    if (error) {
-        console.error('Stripe redirect error:', error);
-    }
+    // Direct redirect to Stripe Checkout URL
+    window.location.href = checkoutUrl;
 };
 
 /**
@@ -92,10 +90,12 @@ export const startCheckoutFlow = async (uid: string, packageId: string): Promise
     console.log(`💳 Starting checkout for package ${packageId}, user ${uid}`);
 
     const session = await createCheckoutSession(uid, packageId);
-    if (!session) {
+    if (!session || !session.url) {
+        console.error('Failed to create checkout session or no URL returned');
         return false;
     }
 
-    await redirectToCheckout(session.sessionId);
+    // Redirect directly to the checkout URL
+    redirectToCheckout(session.url);
     return true;
 };
