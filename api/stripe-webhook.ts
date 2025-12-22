@@ -3,25 +3,35 @@ import Stripe from 'stripe';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2024-12-18.acacia',
-});
+// Initialize Stripe - use API version that matches webhook or let Stripe auto-detect
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // Initialize Firebase Admin
-if (!getApps().length) {
-    // For Vercel, use environment variable for service account
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-        : undefined;
+let db: FirebaseFirestore.Firestore;
 
-    initializeApp({
-        credential: serviceAccount ? cert(serviceAccount) : undefined,
-        projectId: 'chinatetris-c5706',
-    });
+function initializeFirebase() {
+    if (!getApps().length) {
+        const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+        if (!serviceAccountKey) {
+            console.error('FIREBASE_SERVICE_ACCOUNT_KEY not configured');
+            throw new Error('Firebase service account not configured');
+        }
+
+        try {
+            const serviceAccount = JSON.parse(serviceAccountKey);
+            initializeApp({
+                credential: cert(serviceAccount),
+                projectId: 'chinatetris-c5706',
+            });
+            console.log('Firebase Admin initialized successfully');
+        } catch (e) {
+            console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', e);
+            throw new Error('Invalid Firebase service account configuration');
+        }
+    }
+    return getFirestore();
 }
-
-const db = getFirestore();
 
 export const config = {
     api: {
@@ -39,15 +49,33 @@ async function getRawBody(req: VercelRequest): Promise<Buffer> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    console.log('🔔 Stripe webhook received');
+    console.log('Method:', req.method);
+
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // Check required environment variables
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
-        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
         return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
+        console.error('❌ STRIPE_SECRET_KEY not configured');
+        return res.status(500).json({ error: 'Stripe secret key not configured' });
+    }
+
+    // Initialize Firebase
+    try {
+        db = initializeFirebase();
+    } catch (e: any) {
+        console.error('❌ Firebase initialization failed:', e.message);
+        return res.status(500).json({ error: 'Firebase initialization failed' });
     }
 
     let event: Stripe.Event;
@@ -56,9 +84,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const rawBody = await getRawBody(req);
         const signature = req.headers['stripe-signature'] as string;
 
+        if (!signature) {
+            console.error('❌ No stripe-signature header');
+            return res.status(400).json({ error: 'Missing stripe-signature header' });
+        }
+
+        console.log('📝 Verifying webhook signature...');
         event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+        console.log('✅ Webhook signature verified, event type:', event.type);
     } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
+        console.error('❌ Webhook signature verification failed:', err.message);
         return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
 
@@ -68,43 +103,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const session = event.data.object as Stripe.Checkout.Session;
 
             console.log(`💳 Checkout session completed: ${session.id}`);
+            console.log('📦 Session metadata:', JSON.stringify(session.metadata));
 
             // Extract metadata
             const uid = session.metadata?.uid;
             const packageId = session.metadata?.packageId;
-            const tokens = parseInt(session.metadata?.tokens || '0', 10);
+            const tokensStr = session.metadata?.tokens;
+            const tokens = tokensStr ? parseInt(tokensStr, 10) : 0;
 
-            if (!uid || !tokens) {
-                console.error('Missing uid or tokens in session metadata');
-                return res.status(400).json({ error: 'Missing metadata' });
+            console.log(`📋 Extracted: uid=${uid}, packageId=${packageId}, tokens=${tokens}`);
+
+            if (!uid) {
+                console.error('❌ Missing uid in session metadata');
+                return res.status(400).json({ error: 'Missing uid in metadata' });
+            }
+
+            if (!tokens || tokens <= 0) {
+                console.error('❌ Invalid tokens value in session metadata');
+                return res.status(400).json({ error: 'Invalid tokens in metadata' });
             }
 
             try {
                 // Add credits to user
+                console.log(`💰 Adding ${tokens} credits to user ${uid}...`);
                 const userRef = db.collection('users').doc(uid);
                 await userRef.set({
                     credits: FieldValue.increment(tokens),
                     updatedAt: FieldValue.serverTimestamp()
                 }, { merge: true });
 
-                console.log(`💰 Added ${tokens} credits to user ${uid}`);
+                console.log(`✅ Added ${tokens} credits to user ${uid}`);
 
                 // Record the transaction
+                console.log('📝 Recording transaction...');
                 await db.collection('transactions').add({
                     uid,
                     stripeSessionId: session.id,
-                    packageId,
+                    stripePaymentIntent: session.payment_intent,
+                    packageId: packageId || 'unknown',
                     credits: tokens,
-                    amountCents: session.amount_total,
+                    amountCents: session.amount_total || 0,
+                    currency: session.currency || 'eur',
+                    customerEmail: session.customer_details?.email || null,
                     status: 'completed',
                     createdAt: FieldValue.serverTimestamp(),
                     completedAt: FieldValue.serverTimestamp()
                 });
 
-                console.log(`📝 Transaction recorded for session ${session.id}`);
-            } catch (error) {
-                console.error('Error processing payment:', error);
-                return res.status(500).json({ error: 'Failed to process payment' });
+                console.log(`✅ Transaction recorded for session ${session.id}`);
+            } catch (error: any) {
+                console.error('❌ Error processing payment:', error.message);
+                console.error('Stack:', error.stack);
+                return res.status(500).json({ error: 'Failed to process payment', details: error.message });
             }
             break;
         }
@@ -112,14 +162,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'checkout.session.expired': {
             const session = event.data.object as Stripe.Checkout.Session;
             console.log(`⏰ Checkout session expired: ${session.id}`);
-            // Optionally record failed transaction
             break;
         }
 
         default:
-            console.log(`Unhandled event type: ${event.type}`);
+            console.log(`ℹ️ Unhandled event type: ${event.type}`);
     }
 
     // Return a 200 response to acknowledge receipt of the event
+    console.log('✅ Webhook processed successfully');
     return res.status(200).json({ received: true });
 }
