@@ -61,7 +61,7 @@ const CreditShop: React.FC<CreditShopProps> = ({ user, onClose, onPurchaseSucces
                                 ✕
                             </button>
 
-                            <div className="text-5xl mb-3">🪙</div>
+                            <div className="text-5xl mb-3">💰</div>
                             <h1 className="text-2xl md:text-3xl font-black text-white mb-2"
                                 style={{ fontFamily: 'Montserrat, sans-serif' }}>
                                 TOKEN SHOP
