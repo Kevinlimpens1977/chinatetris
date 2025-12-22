@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LeaderboardEntry, UserData } from '../types';
 import GhostInfoPanel from './GhostInfoPanel';
+import DragonChestPopup from './DragonChestPopup';
 
 interface TitleScreenProps {
     onStart: () => void;
@@ -47,6 +48,7 @@ const ChinaContainer: React.FC<ChinaContainerProps> = ({
 
 const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, leaderboard, user }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
+    const [showDragonChest, setShowDragonChest] = useState(false);
 
     const hasCredits = (user?.credits || 0) > 0;
 
@@ -67,12 +69,21 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
             <div className="flex flex-col items-center justify-center mt-8 md:mt-12 w-full shrink-0 relative z-10 text-center">
 
                 {/* Badge */}
-                <div className="relative inline-block mb-4 animate-float">
-                    <div className="absolute inset-0 bg-red-600 blur-md opacity-50 rounded-full"></div>
-                    <h2 className="relative text-white drop-shadow-md tracking-[0.2em] text-[10px] md:text-xs font-bold uppercase bg-gradient-to-r from-red-800 to-red-600 px-4 py-1.5 rounded-full border border-red-400/50 shadow-lg">
-                        Premium Digitaal Gamen
+                {/* Dragon Chest Button */}
+                <button
+                    onClick={() => setShowDragonChest(true)}
+                    className="relative inline-block mb-4 animate-float cursor-pointer hover:scale-105 transition-transform group"
+                >
+                    {/* Golden glow background */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-yellow-500/30 to-red-600 blur-md opacity-50 rounded-full group-hover:opacity-80 transition-opacity"></div>
+                    {/* Shimmer effect on hover */}
+                    <div className="absolute inset-0 overflow-hidden rounded-full">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    </div>
+                    <h2 className="relative text-white drop-shadow-md tracking-[0.15em] text-[10px] md:text-xs font-bold uppercase bg-gradient-to-r from-red-800 to-red-600 px-4 py-1.5 rounded-full border border-yellow-400/50 shadow-[0_0_15px_rgba(251,191,36,0.3)] flex items-center gap-2">
+                        <span>🐉</span> Klik hier voor de tussenstand
                     </h2>
-                </div>
+                </button>
 
                 {/* 3D Title */}
                 <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none mb-6 md:mb-8 relative z-10 text-center select-none"
@@ -283,6 +294,12 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
             {showGhostInfo && (
                 <GhostInfoPanel onClose={() => setShowGhostInfo(false)} />
             )}
+
+            {/* Dragon Chest Popup Modal */}
+            <DragonChestPopup
+                isOpen={showDragonChest}
+                onClose={() => setShowDragonChest(false)}
+            />
         </div>
     );
 };

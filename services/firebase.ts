@@ -15,7 +15,8 @@ import {
     runTransaction,
     increment,
     serverTimestamp,
-    Timestamp
+    Timestamp,
+    onSnapshot
 } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 
@@ -571,8 +572,206 @@ export const firebaseService = {
             console.error("Error in completeTransaction:", e);
             return false;
         }
+    },
+
+    // ==================== DRAGON CHEST COLLECTION ====================
+
+    /**
+     * Get dragon chest data (totals)
+     */
+    async getDragonChestData(): Promise<{
+        totalGoldenCoins: number;
+        totalCredits: number;
+        milestone500Reached: boolean;
+        milestone500Distributed: boolean;
+    } | null> {
+        if (!db) {
+            console.error("getDragonChestData: Firestore not available");
+            return null;
+        }
+        try {
+            const chestRef = doc(db, 'system', 'dragonChest');
+            const chestSnap = await getDoc(chestRef);
+
+            if (chestSnap.exists()) {
+                const data = chestSnap.data();
+                return {
+                    totalGoldenCoins: data.totalGoldenCoins || 0,
+                    totalCredits: data.totalCredits || 0,
+                    milestone500Reached: data.milestones?.['500']?.reached || false,
+                    milestone500Distributed: data.milestones?.['500']?.rewardsDistributed || false
+                };
+            }
+            // Return defaults if document doesn't exist
+            return {
+                totalGoldenCoins: 0,
+                totalCredits: 0,
+                milestone500Reached: false,
+                milestone500Distributed: false
+            };
+        } catch (e) {
+            console.error("Error in getDragonChestData:", e);
+            return null;
+        }
+    },
+
+    /**
+     * Subscribe to dragon chest realtime updates
+     * @param callback - Called with updated data
+     * @returns Unsubscribe function
+     */
+    subscribeToDragonChest(callback: (data: {
+        totalGoldenCoins: number;
+        totalCredits: number;
+        milestone500Reached: boolean;
+        milestone500Distributed: boolean;
+    }) => void): () => void {
+        if (!db) {
+            console.error("subscribeToDragonChest: Firestore not available");
+            return () => { };
+        }
+
+        const chestRef = doc(db, 'system', 'dragonChest');
+
+        return onSnapshot(chestRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                callback({
+                    totalGoldenCoins: data.totalGoldenCoins || 0,
+                    totalCredits: data.totalCredits || 0,
+                    milestone500Reached: data.milestones?.['500']?.reached || false,
+                    milestone500Distributed: data.milestones?.['500']?.rewardsDistributed || false
+                });
+            } else {
+                callback({
+                    totalGoldenCoins: 0,
+                    totalCredits: 0,
+                    milestone500Reached: false,
+                    milestone500Distributed: false
+                });
+            }
+        }, (error) => {
+            console.error("Error in subscribeToDragonChest:", error);
+        });
+    },
+
+    /**
+     * Update dragon chest totals (called after successful payment)
+     * @param amountEuros - Amount in euros (1 euro = 1 golden coin)
+     */
+    async updateDragonChest(amountEuros: number, creditsAdded: number): Promise<boolean> {
+        if (!db) {
+            console.error("updateDragonChest: Firestore not available");
+            return false;
+        }
+        try {
+            const chestRef = doc(db, 'system', 'dragonChest');
+
+            await setDoc(chestRef, {
+                totalGoldenCoins: increment(amountEuros),
+                totalCredits: increment(creditsAdded),
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+
+            console.log(`🐉 Dragon chest updated: +${amountEuros} coins, +${creditsAdded} credits`);
+            return true;
+        } catch (e) {
+            console.error("Error in updateDragonChest:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Record a contribution from a user
+     */
+    async recordContribution(uid: string, amountEuros: number): Promise<boolean> {
+        if (!db) {
+            console.error("recordContribution: Firestore not available");
+            return false;
+        }
+        try {
+            const contributorRef = doc(db, 'contributors', uid);
+
+            await setDoc(contributorRef, {
+                uid,
+                totalContributed: increment(amountEuros),
+                lastContribution: serverTimestamp(),
+                reward500Claimed: false
+            }, { merge: true });
+
+            console.log(`📝 Recorded contribution: ${uid} - ${amountEuros} euros`);
+            return true;
+        } catch (e) {
+            console.error("Error in recordContribution:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Check if milestone should trigger and distribute rewards
+     */
+    async checkAndDistributeMilestone(milestoneAmount: number = 500): Promise<boolean> {
+        if (!db) {
+            console.error("checkAndDistributeMilestone: Firestore not available");
+            return false;
+        }
+        try {
+            const chestRef = doc(db, 'system', 'dragonChest');
+
+            return await runTransaction(db, async (transaction) => {
+                const chestDoc = await transaction.get(chestRef);
+
+                if (!chestDoc.exists()) {
+                    console.log("Dragon chest document does not exist");
+                    return false;
+                }
+
+                const data = chestDoc.data();
+                const totalCoins = data.totalGoldenCoins || 0;
+                const milestoneKey = String(milestoneAmount);
+                const alreadyDistributed = data.milestones?.[milestoneKey]?.rewardsDistributed || false;
+
+                if (totalCoins >= milestoneAmount && !alreadyDistributed) {
+                    console.log(`🎉 Milestone ${milestoneAmount} reached! Distributing rewards...`);
+
+                    // Mark milestone as reached and distributed
+                    transaction.update(chestRef, {
+                        [`milestones.${milestoneKey}.reached`]: true,
+                        [`milestones.${milestoneKey}.reachedAt`]: serverTimestamp(),
+                        [`milestones.${milestoneKey}.rewardsDistributed`]: true
+                    });
+
+                    return true;
+                }
+
+                return false;
+            });
+        } catch (e) {
+            console.error("Error in checkAndDistributeMilestone:", e);
+            return false;
+        }
+    },
+
+    /**
+     * Get all contributors for reward distribution
+     */
+    async getAllContributors(): Promise<Array<{ uid: string; totalContributed: number }>> {
+        if (!db) {
+            console.error("getAllContributors: Firestore not available");
+            return [];
+        }
+        try {
+            const querySnapshot = await getDocs(collection(db, 'contributors'));
+            return querySnapshot.docs.map(doc => ({
+                uid: doc.id,
+                totalContributed: doc.data().totalContributed || 0
+            }));
+        } catch (e) {
+            console.error("Error in getAllContributors:", e);
+            return [];
+        }
     }
 };
 
-export { db, auth };
+export { db, auth, onSnapshot };
 
