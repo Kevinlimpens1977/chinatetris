@@ -240,8 +240,11 @@ const App: React.FC = () => {
         });
       }
     } else if (paymentStatus === 'cancelled') {
-      console.log('💳 Payment cancelled');
+      console.log('💳 Payment cancelled - returning to title screen');
+      // Clear URL params
       window.history.replaceState({}, '', window.location.pathname);
+      // Return to title screen
+      setGameState(GameState.TITLE);
     }
   }, [user?.uid]);
 
