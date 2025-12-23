@@ -126,7 +126,7 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                             <h2 className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-300 uppercase tracking-wider">
                                 De Drakenschat
                             </h2>
-                            <p className="text-xs text-yellow-100/60 mt-1">Realtime Tussenstand</p>
+                            <p className="text-sm text-yellow-100/60 mt-1">Realtime Tussenstand</p>
                         </div>
 
                         {/* Main Content */}
@@ -140,9 +140,9 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                                     <span className="relative text-5xl md:text-6xl font-black text-yellow-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
                                         {animatedCoins.toLocaleString()}
                                     </span>
-                                    <span className="ml-2 text-3xl">🪙</span>
+                                    <span className="ml-3 text-5xl md:text-6xl font-black text-amber-500 uppercase tracking-wide drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]">MUNTEN</span>
                                 </div>
-                                <p className="text-sm text-yellow-200/80 mt-3 font-medium">
+                                <p className="text-base text-yellow-200/80 mt-3 font-medium">
                                     Gouden munten in de drakenkist
                                 </p>
                             </div>
@@ -151,7 +151,7 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                             <div className="bg-black/30 rounded-xl p-4 border border-yellow-500/10">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-lg">🎁</span>
-                                    <span className="text-xs text-gray-400 uppercase tracking-wide">
+                                    <span className="text-sm text-gray-400 uppercase tracking-wide">
                                         Mijlpaal: 500 munten
                                     </span>
                                 </div>
@@ -166,7 +166,7 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                                     </div>
                                 </div>
 
-                                <p className="text-[10px] text-center">
+                                <p className="text-xs text-center">
                                     {data.milestone500Reached ? (
                                         <span className="text-green-400">✅ Bereikt! Alle bijdragers ontvingen +1 credit</span>
                                     ) : (
@@ -178,7 +178,7 @@ const DragonChestPopup: React.FC<DragonChestPopupProps> = ({ isOpen, onClose }) 
                             </div>
 
                             {/* Inspirational Text */}
-                            <p className="text-center text-xs text-yellow-100/40 italic">
+                            <p className="text-center text-sm text-yellow-100/40 italic">
                                 "Elke bijdrage helpt de draak ontwaken"
                             </p>
                         </div>

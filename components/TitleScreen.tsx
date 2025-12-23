@@ -68,25 +68,8 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
 
             <div className="flex flex-col items-center justify-center mt-8 md:mt-12 w-full shrink-0 relative z-10 text-center">
 
-                {/* Badge */}
-                {/* Dragon Chest Button */}
-                <button
-                    onClick={() => setShowDragonChest(true)}
-                    className="relative inline-block mb-4 animate-float cursor-pointer hover:scale-105 transition-transform group"
-                >
-                    {/* Golden glow background */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-yellow-500/30 to-red-600 blur-md opacity-50 rounded-full group-hover:opacity-80 transition-opacity"></div>
-                    {/* Shimmer effect on hover */}
-                    <div className="absolute inset-0 overflow-hidden rounded-full">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    </div>
-                    <h2 className="relative text-white drop-shadow-md tracking-[0.15em] text-[10px] md:text-xs font-bold uppercase bg-gradient-to-r from-red-800 to-red-600 px-4 py-1.5 rounded-full border border-yellow-400/50 shadow-[0_0_15px_rgba(251,191,36,0.3)] flex items-center gap-2">
-                        <span>🐉</span> Klik hier voor de tussenstand
-                    </h2>
-                </button>
-
                 {/* 3D Title */}
-                <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none mb-6 md:mb-8 relative z-10 text-center select-none"
+                <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none mb-4 md:mb-6 relative z-10 text-center select-none"
                     style={{
                         fontFamily: 'Montserrat, sans-serif',
                         color: '#ef4444',
@@ -100,6 +83,32 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                     }}>
                     CHINA<br />TETRIS
                 </h1>
+
+                {/* Dragon Chest Button - BELOW TITLE with enhanced styling */}
+                <button
+                    onClick={() => setShowDragonChest(true)}
+                    className="relative inline-block mb-6 cursor-pointer hover:scale-110 transition-all duration-300 group"
+                >
+                    {/* Animated fire/gold glow background */}
+                    <div className="absolute -inset-2 bg-gradient-to-r from-yellow-500 via-red-500 to-yellow-500 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 animate-pulse transition-opacity"></div>
+
+                    {/* Secondary pulsing ring */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 rounded-xl opacity-0 group-hover:opacity-50 animate-ping"></div>
+
+                    {/* Shimmer effect - always running */}
+                    <div className="absolute inset-0 overflow-hidden rounded-xl">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-300/60 to-transparent -translate-x-full animate-shimmer"></div>
+                    </div>
+
+                    {/* Button content */}
+                    <div className="relative bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 px-6 py-3 rounded-xl border-2 border-yellow-300 shadow-[0_0_30px_rgba(251,191,36,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] flex items-center gap-3">
+                        <span className="text-2xl md:text-3xl animate-bounce">🐉</span>
+                        <span className="text-sm md:text-base font-black uppercase tracking-wider text-red-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.3)]">
+                            Bekijk de Drakenschat
+                        </span>
+                        <span className="text-2xl md:text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>🪙</span>
+                    </div>
+                </button>
 
                 {/* User Info & Action */}
                 <div className="w-full max-w-md mx-auto mb-8">
@@ -119,7 +128,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                             (uitloggen)
                                         </button>
                                     </p>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest">
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest">
                                         Klaar voor je volgende uitdaging?
                                     </p>
                                 </div>
@@ -175,19 +184,19 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                 <h3 className="text-yellow-400 font-black text-sm md:text-lg mb-1">Jouw Prestaties</h3>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Tokens:</span>
+                                        <span className="text-sm text-gray-400 uppercase font-bold tracking-widest">Tokens:</span>
                                         <span className={`text-lg md:text-xl font-mono font-black ${hasCredits ? 'text-green-400' : 'text-red-400'}`}>{user?.credits || 0}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Highscore:</span>
+                                        <span className="text-sm text-gray-400 uppercase font-bold tracking-widest">Highscore:</span>
                                         <span className="text-lg md:text-xl font-mono font-black text-white">{(user?.highscore || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400 uppercase font-bold tracking-widest">Tickets:</span>
+                                        <span className="text-sm text-gray-400 uppercase font-bold tracking-widest">Tickets:</span>
                                         <span className="text-lg md:text-xl font-mono font-black text-yellow-400">{user?.tickets || 0}</span>
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-yellow-100/40 mt-2 leading-tight">
+                                <p className="text-xs text-yellow-100/40 mt-2 leading-tight">
                                     Je persoonlijke record en totaal aantal verzamelde tickets uit alle gespeelde spellen.
                                 </p>
                             </div>
@@ -199,13 +208,13 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🎟️</div>
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-yellow-200 font-black text-sm md:text-lg mb-1">Ticket Collectie</h3>
-                                <div className="text-[10px] text-yellow-100/60 uppercase tracking-widest font-bold mb-2">Unieke ID's in jouw bezit:</div>
+                                <div className="text-xs text-yellow-100/60 uppercase tracking-widest font-bold mb-2">Unieke ID's in jouw bezit:</div>
 
                                 {user?.ticketNames && user.ticketNames.length > 0 ? (
                                     <div className="mt-1 mb-3 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                                         <div className="grid grid-cols-2 gap-2">
                                             {user.ticketNames.map((name, i) => (
-                                                <div key={i} className="bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1 text-[10px] font-mono text-yellow-200 flex items-center gap-1 group/ticket hover:bg-yellow-400/20 transition-colors">
+                                                <div key={i} className="bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1 text-xs font-mono text-yellow-200 flex items-center gap-1 group/ticket hover:bg-yellow-400/20 transition-colors">
                                                     <span className="opacity-50">#</span>
                                                     {name}
                                                 </div>
@@ -214,11 +223,11 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                     </div>
                                 ) : (
                                     <div className="py-4 text-center border border-dashed border-white/10 rounded mb-3">
-                                        <p className="text-[10px] text-gray-500 italic">Nog geen unieke tickets gewonnen.</p>
+                                        <p className="text-xs text-gray-500 italic">Nog geen unieke tickets gewonnen.</p>
                                     </div>
                                 )}
 
-                                <p className="text-[9px] text-gray-500 italic leading-tight">
+                                <p className="text-[11px] text-gray-500 italic leading-tight">
                                     Elk ticket geeft kans op extra prijzen in de wekelijkse trekking.
                                 </p>
                             </div>

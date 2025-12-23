@@ -654,8 +654,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
             ref={containerRef}
             className="
       relative w-full h-full
-      max-w-[98vw] md:max-w-[60vw] lg:max-w-[50vw]
-      max-h-[calc(100dvh-80px)] md:max-h-[85vh]
+      max-w-[98vw] md:max-w-[55vw] lg:max-w-[45vw]
+      max-h-[calc(100dvh-55px)] md:max-h-[90vh]
       flex items-center justify-center
       rounded-xl
       p-0 md:p-1

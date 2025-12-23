@@ -35,7 +35,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
       {/* China Theme Border Gradient */}
       <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#fbbf24_20%,#b91c1c_40%,#fbbf24_60%,#b91c1c_80%,#fbbf24_100%)] animate-spin-slow opacity-60"></div>
       <div className="relative w-full h-full bg-black/80 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3">
-        <div className={`text-[9px] md:text-xs font-bold text-${color}-300 uppercase tracking-[0.15em] mb-1 flex items-center gap-1.5 opacity-90`}>
+        <div className={`text-[11px] md:text-sm font-bold text-${color}-300 uppercase tracking-[0.15em] mb-1 flex items-center gap-1.5 opacity-90`}>
           {icon && <span className="hidden sm:inline text-base">{icon}</span>} {label}
         </div>
         <div className="flex items-baseline gap-1 relative z-10 w-full justify-center">
@@ -76,7 +76,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
       `}>
         <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#fbbf24_20%,#b91c1c_40%,#fbbf24_60%,#b91c1c_80%,#fbbf24_100%)] animate-spin-slow opacity-60"></div>
         <div className="relative w-full h-full bg-black/80 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3">
-          <div className="text-[9px] md:text-xs font-bold text-yellow-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1 opacity-90">
+          <div className="text-[11px] md:text-sm font-bold text-yellow-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1 opacity-90">
             VOLGENDE
           </div>
           <div className="flex items-center justify-center flex-1 w-full relative z-10">
@@ -117,14 +117,14 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
       <div className="relative group overflow-hidden rounded-xl md:rounded-2xl p-[1px] md:p-[2px] w-full flex-1 min-h-0 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse">
         <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#dc2626_0%,#ef4444_50%,#dc2626_100%)] animate-spin-slow opacity-70"></div>
         <div className="relative w-full h-full bg-gradient-to-r from-red-900/80 to-orange-900/80 backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3 text-center">
-          <div className="text-[8px] md:text-[9px] font-bold text-red-200 uppercase tracking-[0.15em] mb-1 flex items-center gap-1 justify-center">
+          <div className="text-[10px] md:text-xs font-bold text-red-200 uppercase tracking-[0.15em] mb-1 flex items-center gap-1 justify-center">
             <span className="text-sm">👻</span> GHOST ACTIEF
           </div>
           <div className="flex items-baseline gap-1 relative z-10 justify-center">
             <span className="text-lg sm:text-xl md:text-2xl font-mono font-black text-red-300 drop-shadow-md">
               -{penalty}
             </span>
-            <span className="text-[8px] md:text-[10px] text-red-400/80 uppercase">pt</span>
+            <span className="text-[10px] md:text-xs text-red-400/80 uppercase">pt</span>
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
         <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,#b91c1c_0%,#fbbf24_20%,#b91c1c_40%,#fbbf24_60%,#b91c1c_80%,#fbbf24_100%)] animate-spin-slow opacity-60"></div>
         <div className={`relative w-full h-full backdrop-blur-xl rounded-[calc(0.75rem-1px)] md:rounded-[calc(1rem-2px)] flex flex-col items-center justify-center p-2 md:p-3 transition-colors ${ghostEnabled ? 'bg-red-900/60' : 'bg-black/80'
           }`}>
-          <div className="text-[9px] md:text-xs font-bold text-red-300 uppercase tracking-[0.15em] mb-1 flex items-center gap-1.5 opacity-80">
+          <div className="text-[11px] md:text-sm font-bold text-red-300 uppercase tracking-[0.15em] mb-1 flex items-center gap-1.5 opacity-80">
             <span className="text-base">👻</span> GHOST
           </div>
           <div className="flex items-center justify-center relative z-10 w-full mb-1">
@@ -160,7 +160,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
               🏮
             </span>
           </div>
-          <div className={`text-[8px] md:text-[9px] font-bold uppercase ${ghostEnabled ? 'text-red-400' : 'text-gray-500'
+          <div className={`text-[10px] md:text-xs font-bold uppercase ${ghostEnabled ? 'text-red-400' : 'text-gray-500'
             }`}>
             {ghostEnabled ? 'AAN' : 'UIT'}
           </div>
@@ -172,7 +172,7 @@ const HUD: React.FC<HUDProps> = ({ stats, nextPiece, ghostEnabled = false, onTog
   const showGhostToggle = isGhostAllowedForLevel(stats.level);
 
   return (
-    <div className="flex flex-row md:flex-col gap-1 md:gap-3 w-full h-[60px] md:h-full justify-between md:justify-start items-stretch md:items-stretch py-0 md:py-0 md:w-32 lg:w-40 px-1 md:px-0">
+    <div className="flex flex-row md:flex-col gap-1 md:gap-3 w-full h-[50px] md:h-full justify-between md:justify-start items-stretch md:items-stretch py-0 md:py-0 md:w-32 lg:w-40 px-1 md:px-0">
 
       {/* Stats Section */}
       <div className="flex flex-row md:flex-col gap-1 md:gap-2 flex-[2] md:flex-none order-1 md:order-2">

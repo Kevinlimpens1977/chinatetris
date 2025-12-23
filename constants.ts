@@ -25,11 +25,15 @@ export const GLOWS = {
   Z: '#fca5a5',
 };
 
-// Bonus Ticket Thresholds (Config) - TEMPORARY TEST VALUES
+// Bonus Ticket Thresholds (Config)
 export const BONUS_TICKET_THRESHOLDS = {
-  TIER_1: 400,   // 1 Bonus Ticket
-  TIER_2: 500,   // 2 Bonus Tickets
-  TIER_3: 700    // 5 Bonus Tickets
+  TIER_1: 4000,   // 1 Bonus Ticket
+  TIER_2: 7000,   // 2 Bonus Tickets
+  TIER_3: 10000,  // 3 Bonus Tickets
+  TIER_4: 12000,  // 4 Bonus Tickets
+  TIER_5: 14000,  // 5 Bonus Tickets
+  TIER_6: 15000,  // 6 Bonus Tickets
+  TIER_MAX: 17000 // 10 Bonus Tickets (max)
 };
 
 // Token Packages for Stripe Purchase

@@ -51,7 +51,11 @@ const isGhostAllowedForLevel = (level: number): boolean => {
 
 // -- Calculate Bonus Tickets based on score --
 const calculateBonusTickets = (score: number): number => {
-  if (score >= BONUS_TICKET_THRESHOLDS.TIER_3) return 5;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_MAX) return 10;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_6) return 6;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_5) return 5;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_4) return 4;
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_3) return 3;
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_2) return 2;
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_1) return 1;
   return 0;
@@ -483,7 +487,11 @@ const App: React.FC = () => {
 
     // Calculate bonus tickets based on captured score
     let tickets = 0;
-    if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 5;
+    if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_MAX) tickets = 10;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_6) tickets = 6;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_5) tickets = 5;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_4) tickets = 4;
+    else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_3) tickets = 3;
     else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_2) tickets = 2;
     else if (finalScore >= BONUS_TICKET_THRESHOLDS.TIER_1) tickets = 1;
 
