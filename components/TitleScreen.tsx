@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LeaderboardEntry, UserData } from '../types';
 import GhostInfoPanel from './GhostInfoPanel';
 import DragonChestPopup from './DragonChestPopup';
+import CountdownTile from './CountdownTile';
 
 interface TitleScreenProps {
     onStart: () => void;
@@ -44,6 +45,26 @@ const ChinaContainer: React.FC<ChinaContainerProps> = ({
             </div>
         </div>
     );
+};
+
+// Helper function to format names for privacy (GDPR compliant)
+// Shows first name + first letter of last name only
+const formatPrivacyName = (fullName: string | undefined): string => {
+    if (!fullName) return 'PLAYER';
+
+    // Split by space or underscore
+    const parts = fullName.replace(/_/g, ' ').trim().split(/\s+/);
+
+    if (parts.length === 1) {
+        // Only one name, show it as-is
+        return parts[0].toUpperCase();
+    }
+
+    // First name + first letter of last name
+    const firstName = parts[0];
+    const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+
+    return `${firstName.toUpperCase()}_${lastInitial}.`;
 };
 
 const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, leaderboard, user }) => {
@@ -106,7 +127,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                         <span className="text-sm md:text-base font-black uppercase tracking-wider text-red-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.3)]">
                             Bekijk de Drakenschat
                         </span>
-                        <span className="text-2xl md:text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>🪙</span>
+                        <span className="text-2xl md:text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>🐉</span>
                     </div>
                 </button>
 
@@ -117,20 +138,16 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
 
                             {/* Welcome User */}
                             {user && (
-                                <div className="text-center">
-                                    <p className="text-sm md:text-base text-yellow-100/80 mb-2 flex items-center justify-center gap-2">
+                                <div className="text-center flex flex-col items-center gap-3">
+                                    <p className="text-sm md:text-base text-yellow-100/80 flex items-center justify-center gap-2">
                                         Ni hao, <span className="font-bold text-white text-lg">{user.name}</span>
-                                        <button
-                                            onClick={onLogout}
-                                            className="text-gray-400 hover:text-red-400 transition-colors text-xs"
-                                            title="Uitloggen"
-                                        >
-                                            (uitloggen)
-                                        </button>
                                     </p>
-                                    <p className="text-xs text-gray-400 uppercase tracking-widest">
-                                        Klaar voor je volgende uitdaging?
-                                    </p>
+                                    <button
+                                        onClick={onLogout}
+                                        className="px-4 py-1.5 rounded-full bg-gray-700/60 hover:bg-red-600/80 text-gray-300 hover:text-white text-xs font-medium uppercase tracking-wider transition-all duration-200 border border-gray-600/50 hover:border-red-500/50"
+                                    >
+                                        Uitloggen
+                                    </button>
                                 </div>
                             )}
 
@@ -145,7 +162,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                             >
                                 <span className="animate-bounce">{hasCredits ? '🕹️' : '🪙'}</span>
                                 {hasCredits ? 'SPEEL SPEL' : 'KOOP TOKENS'}
-                                <span className="animate-bounce delay-100">{hasCredits ? '🐉' : '💳'}</span>
+                                <span className="animate-bounce delay-100">{hasCredits ? '🕹️' : '💳'}</span>
                             </button>
 
                             {/* Buy More Tokens (only shown if has credits) */}
@@ -173,10 +190,10 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
             </div>
 
             {/* CONTENT GRID */}
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-8 px-2">
+            <div className="w-full flex flex-col md:flex-row justify-center items-start gap-6 md:gap-8 pb-8 px-2">
 
                 {/* Left Column: Info Boxes */}
-                <div className="flex flex-col gap-4 md:gap-6 text-left">
+                <div className="flex flex-col gap-4 md:gap-6 text-left w-full md:w-auto md:max-w-[400px]">
                     <ChinaContainer className="bg-gradient-to-br from-red-950/40 to-black/60">
                         <div className="flex items-start gap-4">
                             <div className="text-3xl md:text-4xl filter drop-shadow-md">🏆</div>
@@ -228,7 +245,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                 )}
 
                                 <p className="text-[11px] text-gray-500 italic leading-tight">
-                                    Elk ticket geeft kans op extra prijzen in de wekelijkse trekking.
+                                    Hoe meer tickets hoe meer kans op de gouden munten
                                 </p>
                             </div>
                         </div>
@@ -236,13 +253,13 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                 </div>
 
                 {/* Right Column: Leaderboard */}
-                <div className="h-full min-h-[300px]">
+                <div className="h-full min-h-[300px] w-full md:w-auto md:min-w-[240px] md:max-w-[300px]">
                     <ChinaContainer className="h-full flex flex-col bg-gradient-to-b from-red-950/60 to-black/80" noPadding={true}>
                         {/* Retro Header */}
                         <div className="p-3 md:p-4 border-b border-red-500/30 text-center shrink-0">
                             <h2 className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-red-400"
                                 style={{ fontFamily: 'monospace', textShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
-                                GLOBAL LEADERBOARD
+                                HOOGSTE SCORE
                             </h2>
                         </div>
 
@@ -282,7 +299,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                                         #{idx + 1}
                                                     </span>
                                                     <span className="text-white font-bold uppercase truncate">
-                                                        {entry.name?.replace(/\s+/g, '_') || 'PLAYER'}
+                                                        {formatPrivacyName(entry.name)}
                                                     </span>
                                                 </div>
                                                 {/* Score */}
@@ -296,6 +313,13 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                             )}
                         </div>
                     </ChinaContainer>
+                </div>
+            </div>
+
+            {/* Countdown Tile - Full width at bottom */}
+            <div className="w-full flex justify-center px-2 pb-8">
+                <div className="w-full" style={{ maxWidth: 'calc(400px + 300px + 2rem)' }}>
+                    <CountdownTile />
                 </div>
             </div>
 
