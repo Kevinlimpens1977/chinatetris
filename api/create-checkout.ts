@@ -65,10 +65,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('🌐 Using site URL:', siteUrl);
 
-        // Create Stripe Checkout Session with automatic payment methods
+        // Create Stripe Checkout Session with iDEAL only (NL market)
+        // iDEAL fee: €0.29 flat per transaction
         const session = await stripe.checkout.sessions.create({
-            // iDEAL first (priority), then card as backup
-            payment_method_types: ['ideal', 'card'],
+            // iDEAL only - no credit card (lower fees, simpler for Dutch market)
+            payment_method_types: ['ideal'],
             line_items: [
                 {
                     price_data: {

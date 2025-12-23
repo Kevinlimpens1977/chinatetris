@@ -10,6 +10,7 @@ import DebugPanel from './components/DebugPanel';
 import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackground';
 import LeaderboardModal from './components/LeaderboardModal';
 import CreditShop from './components/CreditShop';
+import AdminDashboard from './components/AdminDashboard';
 import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
 import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists, deductCredit } from './services/backend';
@@ -137,6 +138,10 @@ const App: React.FC = () => {
   const dropCounterRef = useRef<number>(0);
   const dropIntervalRef = useRef<number>(1000);
   const ghostEnabledRef = useRef(ghostEnabled);
+
+  // === IDEMPOTENCY: Prevent duplicate game-over processing ===
+  const isGameEndingRef = useRef(false); // Guard against multiple handleGameOver calls
+  const gameSessionIdRef = useRef<string | null>(null); // Unique ID per game session
 
   const backgroundRef = useRef<ChinaBackgroundHandle>(null);
 
@@ -468,6 +473,22 @@ const App: React.FC = () => {
   };
 
   const handleGameOver = async () => {
+    // === IDEMPOTENCY GUARD: Prevent duplicate processing ===
+    if (isGameEndingRef.current) {
+      console.warn("⚠️ handleGameOver already in progress - skipping duplicate call");
+      return;
+    }
+    isGameEndingRef.current = true; // Set flag IMMEDIATELY
+
+    // Capture current session ID for validation
+    const currentSessionId = gameSessionIdRef.current;
+    if (!currentSessionId) {
+      console.error("❌ No game session ID - cannot process game over");
+      isGameEndingRef.current = false;
+      return;
+    }
+    console.log(`🎮 handleGameOver - Session: ${currentSessionId}`);
+
     // IMMEDIATELY capture final score before ANY state changes
     const finalScore = statsRef.current.score;
 
@@ -482,6 +503,7 @@ const App: React.FC = () => {
     // Don't persist a 0-score game
     if (finalScore === 0) {
       console.warn("⚠️ Score is 0 - skipping persistence (likely immediate collision)");
+      isGameEndingRef.current = false; // Reset flag
       return;
     }
 
@@ -805,6 +827,10 @@ const App: React.FC = () => {
 
 
   const startGame = async () => {
+    // === RESET IDEMPOTENCY FLAGS FOR NEW GAME ===
+    isGameEndingRef.current = false;
+    gameSessionIdRef.current = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`🎮 Starting new game - Session: ${gameSessionIdRef.current}`);
 
     // Play retro credit sound here if feasible
     // const audio = new Audio('/sounds/coin.mp3'); audio.play();
@@ -938,8 +964,17 @@ const App: React.FC = () => {
           onStart={handleStartClick}
           onLogout={signOut}
           onOpenCreditShop={() => setGameState(GameState.CREDIT_SHOP)}
+          onOpenAdmin={() => setGameState(GameState.ADMIN)}
           leaderboard={leaderboard}
           user={user}
+        />
+      )}
+
+      {/* Admin Dashboard - Only accessible by admin */}
+      {!isAuthLoading && gameState === GameState.ADMIN && user && (
+        <AdminDashboard
+          userEmail={user.email}
+          onBack={() => setGameState(GameState.TITLE)}
         />
       )}
 

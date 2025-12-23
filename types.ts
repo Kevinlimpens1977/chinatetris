@@ -5,7 +5,8 @@ export enum GameState {
   CREDIT_SHOP = 'CREDIT_SHOP',
   PLAYING = 'PLAYING',
   LEVEL_UP = 'LEVEL_UP',
-  GAME_OVER = 'GAME_OVER'
+  GAME_OVER = 'GAME_OVER',
+  ADMIN = 'ADMIN'
 }
 
 export interface UserData {

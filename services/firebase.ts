@@ -634,15 +634,20 @@ export const firebaseService = {
         const chestRef = doc(db, 'system', 'dragonChest');
 
         return onSnapshot(chestRef, (snapshot) => {
+            console.log("🐉 subscribeToDragonChest snapshot received:", snapshot.exists());
             if (snapshot.exists()) {
                 const data = snapshot.data();
-                callback({
+                console.log("🐉 Dragon chest raw data:", JSON.stringify(data));
+                const result = {
                     totalGoldenCoins: data.totalGoldenCoins || 0,
                     totalCredits: data.totalCredits || 0,
                     milestone500Reached: data.milestones?.['500']?.reached || false,
                     milestone500Distributed: data.milestones?.['500']?.rewardsDistributed || false
-                });
+                };
+                console.log("🐉 Dragon chest processed data:", JSON.stringify(result));
+                callback(result);
             } else {
+                console.log("🐉 Dragon chest document does not exist!");
                 callback({
                     totalGoldenCoins: 0,
                     totalCredits: 0,

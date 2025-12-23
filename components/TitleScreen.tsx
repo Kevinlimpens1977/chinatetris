@@ -3,11 +3,13 @@ import { LeaderboardEntry, UserData } from '../types';
 import GhostInfoPanel from './GhostInfoPanel';
 import DragonChestPopup from './DragonChestPopup';
 import CountdownTile from './CountdownTile';
+import { isAdmin } from '../utils/isAdmin';
 
 interface TitleScreenProps {
     onStart: () => void;
     onLogout: () => void;
     onOpenCreditShop: () => void;
+    onOpenAdmin?: () => void;
     leaderboard: LeaderboardEntry[];
     user: UserData | null;
 }
@@ -67,9 +69,10 @@ const formatPrivacyName = (fullName: string | undefined): string => {
     return `${firstName.toUpperCase()}_${lastInitial}.`;
 };
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, leaderboard, user }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, onOpenAdmin, leaderboard, user }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
     const [showDragonChest, setShowDragonChest] = useState(false);
+    const showAdminButton = isAdmin(user?.email);
 
     const hasCredits = (user?.credits || 0) > 0;
 
@@ -142,12 +145,23 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                     <p className="text-sm md:text-base text-yellow-100/80 flex items-center justify-center gap-2">
                                         Ni hao, <span className="font-bold text-white text-lg">{user.name}</span>
                                     </p>
-                                    <button
-                                        onClick={onLogout}
-                                        className="px-4 py-1.5 rounded-full bg-gray-700/60 hover:bg-red-600/80 text-gray-300 hover:text-white text-xs font-medium uppercase tracking-wider transition-all duration-200 border border-gray-600/50 hover:border-red-500/50"
-                                    >
-                                        Uitloggen
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {showAdminButton && onOpenAdmin && (
+                                            <button
+                                                onClick={onOpenAdmin}
+                                                className="px-3 py-1.5 rounded-full bg-amber-800/60 hover:bg-amber-600/80 text-amber-200 hover:text-white text-xs font-medium uppercase tracking-wider transition-all duration-200 border border-amber-600/50 hover:border-amber-400/50 flex items-center gap-1"
+                                            >
+                                                <span>⚙️</span>
+                                                <span>Admin</span>
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={onLogout}
+                                            className="px-4 py-1.5 rounded-full bg-gray-700/60 hover:bg-red-600/80 text-gray-300 hover:text-white text-xs font-medium uppercase tracking-wider transition-all duration-200 border border-gray-600/50 hover:border-red-500/50"
+                                        >
+                                            Uitloggen
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -160,7 +174,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                     : 'bg-gradient-to-r from-green-600 to-green-700 shadow-[0_0_20px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:from-green-500 hover:to-green-600 border-green-400/30'
                                     }`}
                             >
-                                <span className="animate-bounce">{hasCredits ? '🕹️' : '🪙'}</span>
+                                <span className="animate-bounce">{hasCredits ? '🕹️' : '💰'}</span>
                                 {hasCredits ? 'SPEEL SPEL' : 'KOOP TOKENS'}
                                 <span className="animate-bounce delay-100">{hasCredits ? '🕹️' : '💳'}</span>
                             </button>
