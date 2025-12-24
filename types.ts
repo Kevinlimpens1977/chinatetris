@@ -33,6 +33,12 @@ export interface LeaderboardEntry {
   bonusTickets?: number;
 }
 
+export interface TicketLeaderboardEntry {
+  uid: string;
+  name: string;
+  tickets: number;
+}
+
 export type TetrominoType = 'I' | 'J' | 'L' | 'O' | 'S' | 'T' | 'Z';
 
 export interface Tetromino {

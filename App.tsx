@@ -11,9 +11,9 @@ import ChinaBackground, { ChinaBackgroundHandle } from './components/ChinaBackgr
 import LeaderboardModal from './components/LeaderboardModal';
 import CreditShop from './components/CreditShop';
 import AdminDashboard from './components/AdminDashboard';
-import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation } from './types';
-import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS } from './constants';
-import { submitGameResult, getLeaderboard, loadUserData, ensureUserExists, deductCredit } from './services/backend';
+import { GameState, PlayerStats, TetrominoType, UserData, LeaderboardEntry, GameAction, PenaltyAnimation, TicketLeaderboardEntry } from './types';
+import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS, TETROMINO_KEYS, BONUS_TICKET_THRESHOLDS, BONUS_CREDIT_THRESHOLD, HIGH_SCORE_RECORD_BONUS } from './constants';
+import { submitGameResult, getLeaderboard, getTicketLeaderboard, loadUserData, ensureUserExists, deductCredit } from './services/backend';
 import { onAuthStateChanged, signOut, getStoredUid } from './services/authService';
 
 // -- Gravity Function: Professional 10-level system --
@@ -52,12 +52,29 @@ const isGhostAllowedForLevel = (level: number): boolean => {
 
 // -- Calculate Bonus Tickets based on score --
 const calculateBonusTickets = (score: number): number => {
-  if (score >= BONUS_TICKET_THRESHOLDS.TIER_MAX) return 10;
+  // 80000+ = 15 tickets (max)
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_MAX) return 15;
+  // 60000-80000 = 11 tickets
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_11) return 11;
+  // 50000 = 10 tickets
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_10) return 10;
+  // 45000 = 9 tickets
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_9) return 9;
+  // 40000 = 8 tickets
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_8) return 8;
+  // 35000 = 7 tickets
+  if (score >= BONUS_TICKET_THRESHOLDS.TIER_7) return 7;
+  // 30000 = 6 tickets
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_6) return 6;
+  // 25000 = 5 tickets
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_5) return 5;
+  // 20000 = 4 tickets
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_4) return 4;
+  // 15000 = 3 tickets
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_3) return 3;
+  // 10000 = 2 tickets
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_2) return 2;
+  // 5000 = 1 ticket
   if (score >= BONUS_TICKET_THRESHOLDS.TIER_1) return 1;
   return 0;
 };
@@ -120,7 +137,12 @@ const App: React.FC = () => {
   // Penalty animations (floating red numbers)
   const [penaltyAnimations, setPenaltyAnimations] = useState<PenaltyAnimation[]>([]);
 
+  // Bonus credit animation state (confetti + text when reaching 200 points)
+  const [showBonusCreditAnimation, setShowBonusCreditAnimation] = useState(false);
+  const bonusCreditAwardedRef = useRef(false); // Track if bonus was already given this game
+
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [ticketLeaderboard, setTicketLeaderboard] = useState<TicketLeaderboardEntry[]>([]);
   const [isNewHigh, setIsNewHigh] = useState(false);
 
   // Visual Feedback State
@@ -197,8 +219,9 @@ const App: React.FC = () => {
         // Load user data and leaderboard in background (non-blocking)
         Promise.all([
           loadUserData(firebaseUser.uid),
-          getLeaderboard()
-        ]).then(([userData, lb]) => {
+          getLeaderboard(),
+          getTicketLeaderboard()
+        ]).then(([userData, lb, ticketLb]) => {
           if (userData) {
             setUser(prev => prev ? {
               ...prev,
@@ -209,6 +232,7 @@ const App: React.FC = () => {
             } : null);
           }
           setLeaderboard(lb);
+          setTicketLeaderboard(ticketLb);
         }).catch(err => {
           console.error("Background data load error:", err);
         });
@@ -218,6 +242,7 @@ const App: React.FC = () => {
         // Clear all user state on logout
         setUser(null);
         setLeaderboard([]);
+        setTicketLeaderboard([]);
         setGameState(GameState.LOGIN);
         setIsAuthLoading(false);
       }
@@ -424,6 +449,23 @@ const App: React.FC = () => {
       bonusTickets: nextTickets
     });
 
+    // === BONUS CREDIT LOGIC: Award +1 credit when crossing 200 points ===
+    if (nextScore >= BONUS_CREDIT_THRESHOLD && !bonusCreditAwardedRef.current) {
+      bonusCreditAwardedRef.current = true; // Mark as awarded for this game
+      console.log(`🎉 BONUS CREDIT! Score ${nextScore} crossed ${BONUS_CREDIT_THRESHOLD} threshold!`);
+
+      // Award +1 credit to the user
+      setUser(prev => prev ? { ...prev, credits: (prev.credits || 0) + 1 } : null);
+
+      // Trigger confetti animation
+      setShowBonusCreditAnimation(true);
+
+      // Auto-hide animation after 3 seconds
+      setTimeout(() => {
+        setShowBonusCreditAnimation(false);
+      }, 3000);
+    }
+
     // Update gravity for new level
     dropIntervalRef.current = getGravityForLevel(newLevel);
 
@@ -578,8 +620,53 @@ const App: React.FC = () => {
     console.log('[Dashboard] Refreshed leaderboard:', newLeaderboard.length, 'entries');
     setLeaderboard(newLeaderboard);
 
+    // Refresh Ticket Leaderboard
+    const previousTicketLeader = ticketLeaderboard.length > 0 ? ticketLeaderboard[0] : null;
+    const newTicketLeaderboard = await getTicketLeaderboard();
+    console.log('[Dashboard] Refreshed ticket leaderboard:', newTicketLeaderboard.length, 'entries');
+    setTicketLeaderboard(newTicketLeaderboard);
+
+    // === HIGH SCORE RECORD BONUS: +3 credits for breaking the overall record ===
+    // Check if the player beat the #1 spot (overall highest score)
+    const currentTopScore = newLeaderboard.length > 0 ? Math.max(...newLeaderboard.map(e => e.highscore || 0)) : 0;
+    const brokeOverallRecord = finalScore > currentTopScore && finalScore > 0;
+
+    if (brokeOverallRecord) {
+      console.log(`👑 NEW OVERALL RECORD! Score ${finalScore} beats previous top ${currentTopScore}. Awarding +${HIGH_SCORE_RECORD_BONUS} credits!`);
+
+      // Award bonus credits to user (this will be persisted when we refresh user data)
+      // We need to add these credits to Firestore as well
+      const { doc, updateDoc, increment } = await import('firebase/firestore');
+      const { db } = await import('./services/firebase');
+      const userRef = doc(db, 'users', effectiveUid);
+      await updateDoc(userRef, {
+        credits: increment(HIGH_SCORE_RECORD_BONUS)
+      });
+      console.log(`👑 Added ${HIGH_SCORE_RECORD_BONUS} bonus credits to Firestore for new record holder!`);
+    }
+
+    // === TICKET LEADER BONUS: +1 credit when becoming NEW #1 ticket holder ===
+    // Only triggers when a DIFFERENT player overtakes the previous #1
+    const newTicketLeader = newTicketLeaderboard.length > 0 ? newTicketLeaderboard[0] : null;
+
+    if (newTicketLeader && previousTicketLeader &&
+      newTicketLeader.uid === effectiveUid &&
+      previousTicketLeader.uid !== effectiveUid &&
+      newTicketLeader.tickets > previousTicketLeader.tickets) {
+
+      console.log(`🎟️ NEW TICKET LEADER! ${newTicketLeader.name} overtook ${previousTicketLeader.name} with ${newTicketLeader.tickets} tickets! Awarding +1 credit!`);
+
+      const { doc, updateDoc, increment } = await import('firebase/firestore');
+      const { db } = await import('./services/firebase');
+      const userRef = doc(db, 'users', effectiveUid);
+      await updateDoc(userRef, {
+        credits: increment(1)
+      });
+      console.log(`🎟️ Added 1 bonus credit to Firestore for new ticket leader!`);
+    }
+
     // Refresh user data from Firestore to ensure dashboard shows Firestore truth
-    // This now includes the deducted credit
+    // This now includes the deducted credit and any record bonus
     const refreshedUserData = await loadUserData(effectiveUid);
     if (refreshedUserData) {
       console.log('[Dashboard] Refreshed user data from Firestore:', refreshedUserData);
@@ -594,7 +681,7 @@ const App: React.FC = () => {
 
     // Check if new high (simple check against top scores)
     const madeTop = newLeaderboard.some(entry => entry.highscore <= finalScore);
-    setIsNewHigh(madeTop);
+    setIsNewHigh(madeTop || brokeOverallRecord);
   };
 
   const movePiece = (dir: { x: number; y: number }) => {
@@ -829,6 +916,7 @@ const App: React.FC = () => {
   const startGame = async () => {
     // === RESET IDEMPOTENCY FLAGS FOR NEW GAME ===
     isGameEndingRef.current = false;
+    bonusCreditAwardedRef.current = false; // Reset bonus credit for new game
     gameSessionIdRef.current = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log(`🎮 Starting new game - Session: ${gameSessionIdRef.current}`);
 
@@ -878,7 +966,17 @@ const App: React.FC = () => {
     setShowLeaderboard(false);
   };
 
-  const handleQuitGame = () => {
+  const handleQuitGame = async () => {
+    // When player clicks STOPPEN, treat it as a game over:
+    // - Submit the current score
+    // - Deduct the credit
+    // - Then return to title screen
+    console.log('🛑 Player clicked STOPPEN - ending game properly');
+
+    // Process game over (submits score, deducts credit)
+    await handleGameOver();
+
+    // After game over is processed, go to title screen
     setGameState(GameState.TITLE);
     setIsPaused(false);
     setShowLeaderboard(false);
@@ -966,6 +1064,7 @@ const App: React.FC = () => {
           onOpenCreditShop={() => setGameState(GameState.CREDIT_SHOP)}
           onOpenAdmin={() => setGameState(GameState.ADMIN)}
           leaderboard={leaderboard}
+          ticketLeaderboard={ticketLeaderboard}
           user={user}
         />
       )}
@@ -1046,6 +1145,39 @@ const App: React.FC = () => {
                   level={stats.level}
                 />
               </div>
+
+              {/* Bonus Credit Confetti Animation Overlay */}
+              {showBonusCreditAnimation && (
+                <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
+                  {/* Confetti Particles */}
+                  {[...Array(50)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-3 h-3 animate-confetti"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `-10px`,
+                        backgroundColor: ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff8fab', '#ffc300'][i % 6],
+                        borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                        animationDelay: `${Math.random() * 0.5}s`,
+                        animationDuration: `${2 + Math.random() * 1}s`,
+                        transform: `rotate(${Math.random() * 360}deg)`,
+                      }}
+                    />
+                  ))}
+                  {/* Bonus Credit Message */}
+                  <div className="bg-gradient-to-br from-yellow-500 via-amber-500 to-orange-500 px-8 py-6 rounded-2xl shadow-2xl animate-bounce-in border-4 border-yellow-300">
+                    <div className="text-center">
+                      <div className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2 animate-pulse">
+                        🎉 +1 CREDIT! 🎉
+                      </div>
+                      <div className="text-lg md:text-xl font-bold text-yellow-100">
+                        Bonus voor {BONUS_CREDIT_THRESHOLD}+ punten!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* HUD - Right side on desktop, below on mobile */}

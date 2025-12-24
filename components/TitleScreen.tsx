@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LeaderboardEntry, UserData } from '../types';
+import { LeaderboardEntry, UserData, TicketLeaderboardEntry } from '../types';
 import GhostInfoPanel from './GhostInfoPanel';
 import DragonChestPopup from './DragonChestPopup';
 import CountdownTile from './CountdownTile';
@@ -11,6 +11,7 @@ interface TitleScreenProps {
     onOpenCreditShop: () => void;
     onOpenAdmin?: () => void;
     leaderboard: LeaderboardEntry[];
+    ticketLeaderboard: TicketLeaderboardEntry[];
     user: UserData | null;
 }
 
@@ -69,7 +70,7 @@ const formatPrivacyName = (fullName: string | undefined): string => {
     return `${firstName.toUpperCase()}_${lastInitial}.`;
 };
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, onOpenAdmin, leaderboard, user }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCreditShop, onOpenAdmin, leaderboard, ticketLeaderboard, user }) => {
     const [showGhostInfo, setShowGhostInfo] = useState(false);
     const [showDragonChest, setShowDragonChest] = useState(false);
     const showAdminButton = isAdmin(user?.email);
@@ -190,13 +191,13 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                                 </button>
                             )}
 
-                            {/* Ghost Info Button */}
+                            {/* Game Info Button */}
                             <button
                                 onClick={() => setShowGhostInfo(true)}
                                 className="group relative w-full sm:w-auto px-6 py-2 rounded-full bg-gradient-to-r from-yellow-700/80 to-amber-700/80 hover:from-yellow-600 hover:to-amber-600 text-white font-bold text-xs md:text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-yellow-400/20"
                             >
-                                <span className="text-lg">👻</span>
-                                <span>Geest & Strafpunten Info</span>
+                                <span className="text-lg">🎮</span>
+                                <span>Game Info</span>
                             </button>
                         </div>
                     </ChinaContainer>
@@ -266,59 +267,94 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onLogout, onOpenCred
                     </ChinaContainer>
                 </div>
 
-                {/* Right Column: Leaderboard */}
-                <div className="h-full min-h-[300px] w-full md:w-auto md:min-w-[240px] md:max-w-[300px]">
-                    <ChinaContainer className="h-full flex flex-col bg-gradient-to-b from-red-950/60 to-black/80" noPadding={true}>
-                        {/* Retro Header */}
+                {/* Right Column: Dual Leaderboard - Two Separate Containers */}
+                <div className="h-full min-h-[300px] w-full md:w-auto md:min-w-[240px] md:max-w-[300px] flex flex-col gap-3 overflow-hidden">
+
+                    {/* === HOOGSTE SCORE CONTAINER === */}
+                    <ChinaContainer className="flex-1 flex flex-col bg-gradient-to-b from-red-950/60 to-black/80 overflow-hidden" noPadding={true}>
                         <div className="p-3 md:p-4 border-b border-red-500/30 text-center shrink-0">
-                            <h2 className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-red-400"
+                            <h2 className="text-xs md:text-sm font-black uppercase tracking-[0.2em] text-red-400"
                                 style={{ fontFamily: 'monospace', textShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
-                                HOOGSTE SCORE
+                                🏆 HOOGSTE SCORE
                             </h2>
                         </div>
 
-                        {/* Retro Leaderboard List */}
-                        <div className="flex-1 p-3 md:p-4 overflow-y-auto scrollbar-hide">
+                        {/* Highscore List */}
+                        <div className="flex-1 p-2 md:p-3 overflow-y-auto scrollbar-hide">
                             {leaderboard.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
-                                    <span className="text-4xl mb-2 opacity-50">🐉</span>
-                                    <p className="text-sm italic font-mono">WAITING FOR PLAYERS...</p>
+                                <div className="flex flex-col items-center justify-center text-gray-400 py-2">
+                                    <p className="text-xs italic font-mono">WACHTEN...</p>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
-                                    {leaderboard.slice(0, 7).map((entry, idx) => {
-                                        // Retro color scheme: Gold, Silver, Bronze for top 3
-                                        const rankColors = [
-                                            'text-yellow-400', // #1 Gold
-                                            'text-cyan-400',   // #2 Cyan/Silver
-                                            'text-green-400',  // #3 Green/Bronze
-                                        ];
-                                        const scoreColors = [
-                                            'text-yellow-400',
-                                            'text-cyan-400',
-                                            'text-green-400',
-                                        ];
+                                <div className="space-y-1">
+                                    {leaderboard.slice(0, 5).map((entry, idx) => {
+                                        const rankColors = ['text-yellow-400', 'text-cyan-400', 'text-green-400'];
                                         const rankColor = rankColors[idx] || 'text-gray-400';
-                                        const scoreColor = scoreColors[idx] || 'text-white';
+                                        const scoreColor = rankColors[idx] || 'text-white';
 
                                         return (
                                             <div
                                                 key={idx}
-                                                className="flex items-center justify-between font-mono text-xs md:text-sm tracking-wide"
+                                                className="flex items-center justify-between font-mono text-[10px] md:text-xs tracking-wide"
                                                 style={{ fontFamily: 'monospace' }}
                                             >
-                                                {/* Rank & Name */}
-                                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                    <span className={`${rankColor} font-black w-6 shrink-0`}>
+                                                <div className="flex items-center gap-1 min-w-0 flex-1">
+                                                    <span className={`${rankColor} font-black w-5 shrink-0`}>
                                                         #{idx + 1}
                                                     </span>
                                                     <span className="text-white font-bold uppercase truncate">
                                                         {formatPrivacyName(entry.name)}
                                                     </span>
                                                 </div>
-                                                {/* Score */}
-                                                <span className={`${scoreColor} font-black tabular-nums shrink-0 ml-2`}>
+                                                <span className={`${scoreColor} font-black tabular-nums shrink-0 ml-1`}>
                                                     {entry.highscore?.toLocaleString() || 0}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </ChinaContainer>
+
+                    {/* === MEESTE TICKETS CONTAINER === */}
+                    <ChinaContainer className="flex-1 flex flex-col bg-gradient-to-b from-yellow-950/60 to-black/80 overflow-hidden" noPadding={true}>
+                        <div className="p-3 md:p-4 border-b border-yellow-500/30 text-center shrink-0">
+                            <h2 className="text-xs md:text-sm font-black uppercase tracking-[0.2em] text-yellow-400"
+                                style={{ fontFamily: 'monospace', textShadow: '0 0 10px rgba(251, 191, 36, 0.5)' }}>
+                                🎟️ MEESTE TICKETS
+                            </h2>
+                        </div>
+
+                        {/* Ticket Leaderboard List */}
+                        <div className="flex-1 p-2 md:p-3 overflow-y-auto scrollbar-hide">
+                            {ticketLeaderboard.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center text-gray-400 py-2">
+                                    <p className="text-xs italic font-mono">GEEN TICKETS...</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {ticketLeaderboard.slice(0, 5).map((entry, idx) => {
+                                        const rankColors = ['text-yellow-400', 'text-cyan-400', 'text-green-400'];
+                                        const rankColor = rankColors[idx] || 'text-gray-400';
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center justify-between font-mono text-[10px] md:text-xs tracking-wide"
+                                                style={{ fontFamily: 'monospace' }}
+                                            >
+                                                <div className="flex items-center gap-1 min-w-0 flex-1">
+                                                    <span className={`${rankColor} font-black w-5 shrink-0`}>
+                                                        #{idx + 1}
+                                                    </span>
+                                                    <span className="text-white font-bold uppercase truncate">
+                                                        {formatPrivacyName(entry.name)}
+                                                    </span>
+                                                </div>
+                                                <span className={`${rankColor} font-black tabular-nums shrink-0 ml-1 flex items-center gap-1`}>
+                                                    🎟️ {entry.tickets}
+                                                    {idx === 0 && <span className="text-yellow-400">👑</span>}
                                                 </span>
                                             </div>
                                         );

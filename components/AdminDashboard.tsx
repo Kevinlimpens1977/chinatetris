@@ -172,22 +172,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userEmail, onBack }) =>
                 throw new Error('Not authenticated');
             }
 
-            const idToken = await currentUser.getIdToken();
-
-            const response = await fetch('/api/admin-delete-ticket', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${idToken}`
-                },
-                body: JSON.stringify({ ticketId: deleteModal.ticketId })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to delete ticket');
+            // Verify admin status
+            if (!isAdmin(currentUser.email || '')) {
+                throw new Error('Not authorized - admin only');
             }
+
+            // Delete ticket directly from Firestore
+            const { doc, deleteDoc } = await import('firebase/firestore');
+            const { db } = await import('../services/firebase');
+
+            if (!db) {
+                throw new Error('Firestore not available');
+            }
+
+            const ticketRef = doc(db, 'tickets', deleteModal.ticketId);
+            await deleteDoc(ticketRef);
+
+            console.log(`🗑️ Ticket ${deleteModal.ticketId} deleted by admin ${currentUser.email}`);
 
             // Update local state
             setPlayers(prev => prev.map(player => ({

@@ -4,6 +4,19 @@ export interface ChinaBackgroundHandle {
     triggerDragon: () => void;
 }
 
+// Chinese characters for floating animation
+const CHINESE_CHARS = ['龍', '福', '財', '運', '喜', '寶', '金', '玉', '龙', '鳳', '祥', '瑞'];
+
+interface FloatingChar {
+    char: string;
+    x: number;
+    y: number;
+    speed: number;
+    size: number;
+    opacity: number;
+    color: string;
+}
+
 const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -12,6 +25,9 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
         isActive: false,
         x: -300
     });
+
+    // Floating Chinese characters state
+    const floatingCharsRef = useRef<FloatingChar[]>([]);
 
     useImperativeHandle(ref, () => ({
         triggerDragon: () => {
@@ -35,6 +51,28 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
         const particles: any[] = [];
         const maxParticles = width < 768 ? 40 : 100;
 
+        // Initialize floating Chinese characters
+        const initFloatingChars = () => {
+            const numChars = width < 768 ? 3 : 5;
+            floatingCharsRef.current = [];
+            for (let i = 0; i < numChars; i++) {
+                floatingCharsRef.current.push(createFloatingChar(width, height));
+            }
+        };
+
+        const createFloatingChar = (w: number, h: number): FloatingChar => {
+            const colors = ['#fbbf24', '#ef4444', '#f59e0b', '#dc2626', '#fcd34d'];
+            return {
+                char: CHINESE_CHARS[Math.floor(Math.random() * CHINESE_CHARS.length)],
+                x: -50 - Math.random() * 200, // Start off-screen left
+                y: Math.random() * (h - 100) + 50, // Random height
+                speed: Math.random() * 1.5 + 0.5, // Speed between 0.5 and 2
+                size: Math.random() * 20 + 30, // Size between 30 and 50
+                opacity: Math.random() * 0.3 + 0.2, // Opacity between 0.2 and 0.5
+                color: colors[Math.floor(Math.random() * colors.length)]
+            };
+        };
+
         const createParticle = (w: number, h: number) => {
             const isLantern = Math.random() > 0.7;
             return {
@@ -55,11 +93,15 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
             particles.push(createParticle(width, height));
         }
 
+        // Init floating chars
+        initFloatingChars();
+
         const resize = () => {
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
+            initFloatingChars(); // Reinit chars on resize
         };
 
         window.addEventListener('resize', resize);
@@ -118,7 +160,34 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
                 }
             }
 
-            // --- 3. Dragon Animation (Plow Replacement) ---
+            // --- 3. Draw Floating Chinese Characters ---
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 15;
+            for (let i = 0; i < floatingCharsRef.current.length; i++) {
+                const fc = floatingCharsRef.current[i];
+
+                // Move character from left to right
+                fc.x += fc.speed;
+
+                // Reset when off screen right
+                if (fc.x > width + 100) {
+                    fc.x = -60;
+                    fc.y = Math.random() * (height - 100) + 50;
+                    fc.char = CHINESE_CHARS[Math.floor(Math.random() * CHINESE_CHARS.length)];
+                    fc.speed = Math.random() * 1.5 + 0.5;
+                }
+
+                // Draw the character with glow
+                ctx.globalAlpha = fc.opacity;
+                ctx.fillStyle = fc.color;
+                ctx.font = `bold ${fc.size}px "Noto Sans SC", "Microsoft YaHei", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(fc.char, fc.x, fc.y);
+            }
+            ctx.shadowBlur = 0;
+
+            // --- 4. Dragon Animation (Plow Replacement) ---
             if (dragonState.current.isActive) {
                 dragonState.current.x += 8; // Fast speed
                 const dx = dragonState.current.x;
@@ -182,3 +251,4 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
 });
 
 export default ChinaBackground;
+

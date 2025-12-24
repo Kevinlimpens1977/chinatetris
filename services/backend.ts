@@ -231,6 +231,73 @@ export const getLeaderboard = async (): Promise<Array<{
 };
 
 /**
+ * Get ticket leaderboard (top 5 players with most tickets)
+ * Returns players sorted by ticket count descending
+ */
+export const getTicketLeaderboard = async (): Promise<Array<{
+    uid: string;
+    name: string;
+    tickets: number;
+}>> => {
+    console.log(`🎟️ getTicketLeaderboard - Fetching top 5 ticket holders`);
+
+    if (!firebaseService.isEnabled()) {
+        console.error("getTicketLeaderboard: Firebase not available");
+        return [];
+    }
+
+    try {
+        const { db } = await import('./firebase');
+        const { collection, getDocs, query, doc, getDoc } = await import('firebase/firestore');
+
+        if (!db) {
+            console.error("getTicketLeaderboard: Firestore not available");
+            return [];
+        }
+
+        // Get all tickets and count per user
+        const ticketsRef = collection(db, 'tickets');
+        const ticketsSnapshot = await getDocs(query(ticketsRef));
+
+        // Count tickets per user
+        const ticketCounts: { [uid: string]: number } = {};
+        ticketsSnapshot.forEach(doc => {
+            const uid = doc.data().uid;
+            if (uid) {
+                ticketCounts[uid] = (ticketCounts[uid] || 0) + 1;
+            }
+        });
+
+        // Get user display names
+        const userPromises = Object.keys(ticketCounts).map(async (uid) => {
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+            const displayName = userSnap.exists()
+                ? (userSnap.data().displayName || userSnap.data().email?.split('@')[0] || 'Speler')
+                : 'Speler';
+            return {
+                uid,
+                name: displayName,
+                tickets: ticketCounts[uid]
+            };
+        });
+
+        const allUsers = await Promise.all(userPromises);
+
+        // Sort by ticket count descending and take top 5
+        const result = allUsers
+            .sort((a, b) => b.tickets - a.tickets)
+            .slice(0, 5);
+
+        console.log(`✅ getTicketLeaderboard SUCCESS - ${result.length} entries:`, result.map(r => `${r.name}: ${r.tickets} tickets`));
+        return result;
+    } catch (e) {
+        console.error("Error in getTicketLeaderboard:", e);
+        return [];
+    }
+};
+
+/**
  * Update user credits (atomic operation)
  * @param delta - positive to add, negative to subtract
  */

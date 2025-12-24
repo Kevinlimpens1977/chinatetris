@@ -26,15 +26,27 @@ export const GLOWS = {
 };
 
 // Bonus Ticket Thresholds (Config)
+// Score thresholds for earning bonus tickets
 export const BONUS_TICKET_THRESHOLDS = {
-  TIER_1: 4000,   // 1 Bonus Ticket
-  TIER_2: 7000,   // 2 Bonus Tickets
-  TIER_3: 10000,  // 3 Bonus Tickets
-  TIER_4: 12000,  // 4 Bonus Tickets
-  TIER_5: 14000,  // 5 Bonus Tickets
-  TIER_6: 15000,  // 6 Bonus Tickets
-  TIER_MAX: 17000 // 10 Bonus Tickets (max)
+  TIER_1: 5000,    // 1 Ticket
+  TIER_2: 10000,   // 2 Tickets
+  TIER_3: 15000,   // 3 Tickets
+  TIER_4: 20000,   // 4 Tickets
+  TIER_5: 25000,   // 5 Tickets
+  TIER_6: 30000,   // 6 Tickets
+  TIER_7: 35000,   // 7 Tickets
+  TIER_8: 40000,   // 8 Tickets
+  TIER_9: 45000,   // 9 Tickets
+  TIER_10: 50000,  // 10 Tickets
+  TIER_11: 60000,  // 11 Tickets (60000-80000)
+  TIER_MAX: 80000  // 15 Tickets (80000+)
 };
+
+// Bonus Credit Threshold - earn 1 free credit at this score
+export const BONUS_CREDIT_THRESHOLD = 20000;
+
+// High Score Record Bonus - credits awarded for breaking the all-time high score
+export const HIGH_SCORE_RECORD_BONUS = 3;
 
 // Token Packages for Stripe Purchase
 export const TOKEN_PACKAGES = [
