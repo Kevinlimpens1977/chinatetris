@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import ChristmasOverlay from './ChristmasOverlay';
 
 export interface ChinaBackgroundHandle {
     triggerDragon: () => void;
@@ -247,7 +248,12 @@ const ChinaBackground = forwardRef<ChinaBackgroundHandle, {}>((props, ref) => {
         };
     }, []);
 
-    return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />;
+    return (
+        <>
+            <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />
+            <ChristmasOverlay />
+        </>
+    );
 });
 
 export default ChinaBackground;
